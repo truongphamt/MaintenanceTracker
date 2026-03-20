@@ -29,6 +29,9 @@ export default function ServiceDetail() {
   const [showSchedule, setShowSchedule] = useState(false);
   const [showEditSub, setShowEditSub] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteScheduleId, setDeleteScheduleId] = useState<string | null>(null);
+  const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
+  const [deleteAttachment, setDeleteAttachment] = useState<{ recordId: string; attachmentId: string; name: string } | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
   const [attachToRecord, setAttachToRecord] = useState<string | null>(null);
 
@@ -231,7 +234,7 @@ export default function ServiceDetail() {
                 {s.notes && <span className="text-gray-500 ml-2">- {s.notes}</span>}
               </div>
               <button
-                onClick={() => dispatch({ type: 'DELETE_SCHEDULED_SERVICE', payload: { itemId: item.id, subItemId: sub.id, scheduleId: s.id } })}
+                onClick={() => setDeleteScheduleId(s.id)}
                 className="text-gray-300 hover:text-danger-500 p-1"
               >
                 <Trash2 size={14} />
@@ -269,7 +272,7 @@ export default function ServiceDetail() {
                         <Paperclip size={12} />
                       </button>
                       <button
-                        onClick={() => dispatch({ type: 'DELETE_SERVICE_RECORD', payload: { itemId: item.id, subItemId: sub.id, recordId: record.id } })}
+                        onClick={() => setDeleteRecordId(record.id)}
                         className="text-gray-300 hover:text-danger-500 p-1"
                       >
                         <Trash2 size={12} />
@@ -292,7 +295,7 @@ export default function ServiceDetail() {
                             <span className="text-gray-400">{formatFileSize(att.size)}</span>
                             <button onClick={() => setPreviewAttachment(att)} className="text-gray-400 hover:text-primary-600 p-0.5"><Eye size={12} /></button>
                             <a href={att.dataUrl} download={att.name} onClick={e => e.stopPropagation()} className="text-gray-400 hover:text-primary-600 p-0.5"><Download size={12} /></a>
-                            <button onClick={() => dispatch({ type: 'DELETE_ATTACHMENT', payload: { itemId: item.id, subItemId: sub.id, recordId: record.id, attachmentId: att.id } })} className="text-gray-400 hover:text-danger-500 p-0.5"><X size={12} /></button>
+                            <button onClick={() => setDeleteAttachment({ recordId: record.id, attachmentId: att.id, name: att.name })} className="text-gray-400 hover:text-danger-500 p-0.5"><X size={12} /></button>
                           </div>
                         );
                       })}
@@ -417,6 +420,39 @@ export default function ServiceDetail() {
             </a>
           </div>
         )}
+      </Modal>
+
+      {/* Delete Scheduled Service Confirmation */}
+      <Modal open={deleteScheduleId !== null} onClose={() => setDeleteScheduleId(null)} title="Delete Scheduled Service">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">Are you sure you want to delete this scheduled service? This cannot be undone.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteScheduleId(null)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+            <button onClick={() => { if (deleteScheduleId) { dispatch({ type: 'DELETE_SCHEDULED_SERVICE', payload: { itemId: item.id, subItemId: sub.id, scheduleId: deleteScheduleId } }); setDeleteScheduleId(null); } }} className="flex-1 py-2.5 bg-danger-600 text-white rounded-lg text-sm font-semibold hover:bg-danger-500 transition">Delete</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Service Record Confirmation */}
+      <Modal open={deleteRecordId !== null} onClose={() => setDeleteRecordId(null)} title="Delete Service Record">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">Are you sure you want to delete this service record and all its attachments? This cannot be undone.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteRecordId(null)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+            <button onClick={() => { if (deleteRecordId) { dispatch({ type: 'DELETE_SERVICE_RECORD', payload: { itemId: item.id, subItemId: sub.id, recordId: deleteRecordId } }); setDeleteRecordId(null); } }} className="flex-1 py-2.5 bg-danger-600 text-white rounded-lg text-sm font-semibold hover:bg-danger-500 transition">Delete</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Attachment Confirmation */}
+      <Modal open={deleteAttachment !== null} onClose={() => setDeleteAttachment(null)} title="Remove Attachment">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">Remove <strong>{deleteAttachment?.name}</strong>? This cannot be undone.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteAttachment(null)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+            <button onClick={() => { if (deleteAttachment) { dispatch({ type: 'DELETE_ATTACHMENT', payload: { itemId: item.id, subItemId: sub.id, recordId: deleteAttachment.recordId, attachmentId: deleteAttachment.attachmentId } }); setDeleteAttachment(null); } }} className="flex-1 py-2.5 bg-danger-600 text-white rounded-lg text-sm font-semibold hover:bg-danger-500 transition">Remove</button>
+          </div>
+        </div>
       </Modal>
 
       {/* Hidden file inputs */}

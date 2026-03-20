@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { Bell, Check, Trash2, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
 import { daysFromNow } from '../utils';
 
 export default function Notifications() {
   const { state, dispatch } = useApp();
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const notifications = [...state.notifications].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -40,7 +43,7 @@ export default function Notifications() {
             </button>
           )}
           <button
-            onClick={() => dispatch({ type: 'CLEAR_NOTIFICATIONS' })}
+            onClick={() => setShowClearConfirm(true)}
             className="flex items-center gap-1 text-xs text-gray-500 font-medium hover:text-danger-600 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
           >
             <Trash2 size={14} /> Clear
@@ -104,6 +107,16 @@ export default function Notifications() {
           );
         })}
       </div>
+
+      <Modal open={showClearConfirm} onClose={() => setShowClearConfirm(false)} title="Clear All Notifications">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">Are you sure you want to clear all {notifications.length} notification{notifications.length !== 1 ? 's' : ''}? This cannot be undone.</p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowClearConfirm(false)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+            <button onClick={() => { dispatch({ type: 'CLEAR_NOTIFICATIONS' }); setShowClearConfirm(false); }} className="flex-1 py-2.5 bg-danger-600 text-white rounded-lg text-sm font-semibold hover:bg-danger-500 transition">Clear All</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
