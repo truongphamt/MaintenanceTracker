@@ -42,3 +42,27 @@ export interface Notification {
   read: boolean;
   createdAt: string;
 }
+
+export type InsuranceType = 'home' | 'auto' | 'life' | 'health' | 'other';
+
+export interface InsurancePolicy {
+  id: string;
+  type: InsuranceType;
+  provider: string;
+  policyNumber: string;
+  groupNumber?: string;
+  holderName: string;
+  effectiveDate: string;
+  expirationDate: string;
+  premium?: number;
+  premiumFrequency?: 'monthly' | 'quarterly' | 'semi-annual' | 'annual';
+  deductible?: number;
+  coverageAmount?: number;
+  agentName?: string;
+  agentPhone?: string;
+  claimsPhone?: string;
+  notes?: string;
+  cardImageData?: string;
+  linkedItemId?: string;
+  createdAt: string;
+}

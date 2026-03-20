@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Home, List, Bell, Plus } from 'lucide-react';
+import { Home, List, Bell, Plus, Shield } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export default function Layout() {
@@ -58,6 +58,17 @@ export default function Layout() {
               <Plus size={20} />
             </div>
             <span className="mt-0.5">Add</span>
+          </NavLink>
+          <NavLink
+            to="/insurance"
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center py-2 text-xs font-medium transition-colors ${
+                isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
+              }`
+            }
+          >
+            <Shield size={20} />
+            <span className="mt-0.5">Insurance</span>
           </NavLink>
           <NavLink
             to="/notifications"

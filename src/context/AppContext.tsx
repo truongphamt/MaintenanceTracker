@@ -1,10 +1,11 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { MaintenanceItem, Notification } from '../types';
+import type { MaintenanceItem, Notification, InsurancePolicy } from '../types';
 import { generateId, getNextDueDate, formatDate } from '../utils';
 
 interface AppState {
   items: MaintenanceItem[];
   notifications: Notification[];
+  policies: InsurancePolicy[];
 }
 
 type Action =
@@ -21,6 +22,9 @@ type Action =
   | { type: 'ADD_NOTIFICATION'; payload: Omit<Notification, 'id' | 'createdAt' | 'read'> }
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
   | { type: 'CLEAR_NOTIFICATIONS' }
+  | { type: 'ADD_POLICY'; payload: Omit<InsurancePolicy, 'id' | 'createdAt'> }
+  | { type: 'UPDATE_POLICY'; payload: InsurancePolicy }
+  | { type: 'DELETE_POLICY'; payload: string }
   | { type: 'LOAD_STATE'; payload: AppState };
 
 const STORAGE_KEY = 'maintenance-tracker-data';
@@ -28,9 +32,10 @@ const STORAGE_KEY = 'maintenance-tracker-data';
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return { items: parsed.items || [], notifications: parsed.notifications || [], policies: parsed.policies || [] };
   } catch { /* ignore */ }
-  return { items: [], notifications: [] };
+  return { items: [], notifications: [], policies: [] };
 }
 
 function saveState(state: AppState) {
@@ -222,6 +227,30 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'CLEAR_NOTIFICATIONS':
       return { ...state, notifications: [] };
+
+    case 'ADD_POLICY':
+      return {
+        ...state,
+        policies: [...state.policies, {
+          ...action.payload,
+          id: generateId(),
+          createdAt: new Date().toISOString(),
+        }],
+      };
+
+    case 'UPDATE_POLICY':
+      return {
+        ...state,
+        policies: state.policies.map(p =>
+          p.id === action.payload.id ? action.payload : p
+        ),
+      };
+
+    case 'DELETE_POLICY':
+      return {
+        ...state,
+        policies: state.policies.filter(p => p.id !== action.payload),
+      };
 
     default:
       return state;
