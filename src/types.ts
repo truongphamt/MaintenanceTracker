@@ -1,10 +1,19 @@
 export type ItemCategory = 'home' | 'car' | 'other';
 
+export interface Attachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
+}
+
 export interface ServiceRecord {
   id: string;
   date: string;
   notes: string;
   cost?: number;
+  attachments?: Attachment[];
 }
 
 export interface ScheduledService {

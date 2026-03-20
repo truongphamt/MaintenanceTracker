@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { MaintenanceItem, Notification, InsurancePolicy } from '../types';
+import type { MaintenanceItem, Notification, InsurancePolicy, Attachment } from '../types';
 import { generateId, getNextDueDate, formatDate } from '../utils';
 
 interface AppState {
@@ -15,8 +15,10 @@ type Action =
   | { type: 'ADD_SUB_ITEM'; payload: { itemId: string; name: string; intervalDays?: number } }
   | { type: 'UPDATE_SUB_ITEM'; payload: { itemId: string; subItemId: string; name: string; intervalDays?: number } }
   | { type: 'DELETE_SUB_ITEM'; payload: { itemId: string; subItemId: string } }
-  | { type: 'ADD_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; date: string; notes: string; cost?: number } }
+  | { type: 'ADD_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
   | { type: 'DELETE_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; recordId: string } }
+  | { type: 'ADD_ATTACHMENT'; payload: { itemId: string; subItemId: string; recordId: string; attachment: Attachment } }
+  | { type: 'DELETE_ATTACHMENT'; payload: { itemId: string; subItemId: string; recordId: string; attachmentId: string } }
   | { type: 'ADD_SCHEDULED_SERVICE'; payload: { itemId: string; subItemId: string; dueDate: string; notes: string } }
   | { type: 'DELETE_SCHEDULED_SERVICE'; payload: { itemId: string; subItemId: string; scheduleId: string } }
   | { type: 'ADD_NOTIFICATION'; payload: Omit<Notification, 'id' | 'createdAt' | 'read'> }
@@ -141,7 +143,56 @@ function reducer(state: AppState, action: Action): AppState {
                           date: action.payload.date,
                           notes: action.payload.notes,
                           cost: action.payload.cost,
+                          attachments: action.payload.attachments,
                         }],
+                      }
+                    : si
+                ),
+              }
+            : item
+        ),
+      };
+
+    case 'ADD_ATTACHMENT':
+      return {
+        ...state,
+        items: state.items.map(item =>
+          item.id === action.payload.itemId
+            ? {
+                ...item,
+                subItems: item.subItems.map(si =>
+                  si.id === action.payload.subItemId
+                    ? {
+                        ...si,
+                        history: si.history.map(r =>
+                          r.id === action.payload.recordId
+                            ? { ...r, attachments: [...(r.attachments || []), action.payload.attachment] }
+                            : r
+                        ),
+                      }
+                    : si
+                ),
+              }
+            : item
+        ),
+      };
+
+    case 'DELETE_ATTACHMENT':
+      return {
+        ...state,
+        items: state.items.map(item =>
+          item.id === action.payload.itemId
+            ? {
+                ...item,
+                subItems: item.subItems.map(si =>
+                  si.id === action.payload.subItemId
+                    ? {
+                        ...si,
+                        history: si.history.map(r =>
+                          r.id === action.payload.recordId
+                            ? { ...r, attachments: (r.attachments || []).filter(a => a.id !== action.payload.attachmentId) }
+                            : r
+                        ),
                       }
                     : si
                 ),

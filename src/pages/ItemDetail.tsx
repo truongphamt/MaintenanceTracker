@@ -1,10 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useRef } from 'react';
 import {
   ArrowLeft, Plus, Trash2, Edit2, Clock, Calendar,
   DollarSign, ChevronDown, ChevronUp, Home, Car, Wrench, Filter,
-  ArrowDownAZ, AlertTriangle, RotateCcw,
+  ArrowDownAZ, AlertTriangle, RotateCcw, Paperclip, FileText,
+  Image as ImageIcon, Mail, File, Download, Eye, X,
 } from 'lucide-react';
+import type { Attachment } from '../types';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
@@ -51,12 +54,55 @@ export default function ItemDetail() {
   const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
   const [recordNotes, setRecordNotes] = useState('');
   const [recordCost, setRecordCost] = useState('');
+  const [recordAttachments, setRecordAttachments] = useState<Attachment[]>([]);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
+  const [attachToRecord, setAttachToRecord] = useState<{ subItemId: string; recordId: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachFileInputRef = useRef<HTMLInputElement>(null);
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState<'home' | 'car' | 'other'>('home');
   const [editSubName, setEditSubName] = useState('');
   const [editSubInterval, setEditSubInterval] = useState('');
+
+  const handleFiles = (files: FileList | null, target: 'new' | { subItemId: string; recordId: string }) => {
+    if (!files || !item) return;
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const attachment: Attachment = {
+          id: crypto.randomUUID?.() ?? Math.random().toString(36).substring(2, 11),
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          dataUrl: e.target?.result as string,
+        };
+        if (target === 'new') {
+          setRecordAttachments(prev => [...prev, attachment]);
+        } else {
+          dispatch({
+            type: 'ADD_ATTACHMENT',
+            payload: { itemId: item.id, subItemId: target.subItemId, recordId: target.recordId, attachment },
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return ImageIcon;
+    if (type === 'application/pdf') return FileText;
+    if (type.includes('mail') || type.includes('message') || type.includes('eml')) return Mail;
+    return File;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const filteredSubs = useMemo(() => {
     if (!item) return [];
@@ -120,11 +166,13 @@ export default function ItemDetail() {
         date: recordDate,
         notes: recordNotes,
         cost: recordCost ? parseFloat(recordCost) : undefined,
+        attachments: recordAttachments.length > 0 ? recordAttachments : undefined,
       },
     });
     setRecordDate(new Date().toISOString().split('T')[0]);
     setRecordNotes('');
     setRecordCost('');
+    setRecordAttachments([]);
     setShowAddRecord(null);
   };
 
@@ -349,7 +397,7 @@ export default function ItemDetail() {
 
                     <div className="flex gap-2 flex-wrap">
                       <button
-                        onClick={() => { setRecordDate(new Date().toISOString().split('T')[0]); setRecordNotes(''); setRecordCost(''); setShowAddRecord(sub.id); }}
+                        onClick={() => { setRecordDate(new Date().toISOString().split('T')[0]); setRecordNotes(''); setRecordCost(''); setRecordAttachments([]); setShowAddRecord(sub.id); }}
                         className="flex items-center gap-1 px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-xs font-medium hover:bg-primary-100 transition"
                       >
                         <Plus size={14} /> Log Service
@@ -399,28 +447,82 @@ export default function ItemDetail() {
                     {sub.history.length > 0 && (
                       <div>
                         <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">History</h4>
-                        <div className="space-y-1.5">
-                          {[...sub.history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => (
-                            <div key={record.id} className="flex items-start justify-between py-1.5 text-sm border-b border-gray-50 last:border-0">
-                              <div>
-                                <span className="font-medium text-gray-700">{formatDate(record.date)}</span>
-                                {record.notes && <p className="text-gray-500 text-xs mt-0.5">{record.notes}</p>}
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0 ml-2">
-                                {record.cost != null && (
-                                  <span className="text-xs text-gray-500 flex items-center gap-0.5">
-                                    <DollarSign size={12} />{record.cost.toFixed(2)}
-                                  </span>
+                        <div className="space-y-2">
+                          {[...sub.history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => {
+                            const attachments = record.attachments || [];
+                            return (
+                              <div key={record.id} className="py-2 border-b border-gray-50 last:border-0">
+                                <div className="flex items-start justify-between text-sm">
+                                  <div>
+                                    <span className="font-medium text-gray-700">{formatDate(record.date)}</span>
+                                    {record.notes && <p className="text-gray-500 text-xs mt-0.5">{record.notes}</p>}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                    {record.cost != null && (
+                                      <span className="text-xs text-gray-500 flex items-center gap-0.5">
+                                        <DollarSign size={12} />{record.cost.toFixed(2)}
+                                      </span>
+                                    )}
+                                    <button
+                                      onClick={() => { setAttachToRecord({ subItemId: sub.id, recordId: record.id }); attachFileInputRef.current?.click(); }}
+                                      className="text-gray-300 hover:text-primary-500 p-1"
+                                      title="Attach receipt"
+                                    >
+                                      <Paperclip size={12} />
+                                    </button>
+                                    <button
+                                      onClick={() => dispatch({ type: 'DELETE_SERVICE_RECORD', payload: { itemId: item.id, subItemId: sub.id, recordId: record.id } })}
+                                      className="text-gray-300 hover:text-danger-500 p-1"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
+                                </div>
+                                {attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                    {attachments.map(att => {
+                                      const Icon = getFileIcon(att.type);
+                                      const isImage = att.type.startsWith('image/');
+                                      return (
+                                        <div key={att.id} className="group relative flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs">
+                                          {isImage ? (
+                                            <img src={att.dataUrl} alt={att.name} className="w-5 h-5 rounded object-cover" />
+                                          ) : (
+                                            <Icon size={14} className="text-gray-400 shrink-0" />
+                                          )}
+                                          <span className="text-gray-600 truncate max-w-[100px]">{att.name}</span>
+                                          <span className="text-gray-400">{formatFileSize(att.size)}</span>
+                                          <button
+                                            onClick={() => setPreviewAttachment(att)}
+                                            className="text-gray-400 hover:text-primary-600 p-0.5"
+                                            title="Preview"
+                                          >
+                                            <Eye size={12} />
+                                          </button>
+                                          <a
+                                            href={att.dataUrl}
+                                            download={att.name}
+                                            onClick={e => e.stopPropagation()}
+                                            className="text-gray-400 hover:text-primary-600 p-0.5"
+                                            title="Download"
+                                          >
+                                            <Download size={12} />
+                                          </a>
+                                          <button
+                                            onClick={() => dispatch({ type: 'DELETE_ATTACHMENT', payload: { itemId: item.id, subItemId: sub.id, recordId: record.id, attachmentId: att.id } })}
+                                            className="text-gray-400 hover:text-danger-500 p-0.5"
+                                            title="Remove"
+                                          >
+                                            <X size={12} />
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 )}
-                                <button
-                                  onClick={() => dispatch({ type: 'DELETE_SERVICE_RECORD', payload: { itemId: item.id, subItemId: sub.id, recordId: record.id } })}
-                                  className="text-gray-300 hover:text-danger-500 p-1"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -507,6 +609,48 @@ export default function ItemDetail() {
               placeholder="0.00"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
             />
+          </div>
+          {/* Attachments */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Receipts / Attachments <span className="text-gray-400 font-normal">optional</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 font-medium hover:border-primary-400 hover:text-primary-600 transition"
+            >
+              <Paperclip size={16} /> Attach Files
+            </button>
+            <p className="text-[11px] text-gray-400 mt-1">Images, PDFs, or email files (.eml)</p>
+            {recordAttachments.length > 0 && (
+              <div className="space-y-1.5 mt-2">
+                {recordAttachments.map(att => {
+                  const Icon = getFileIcon(att.type);
+                  const isImage = att.type.startsWith('image/');
+                  return (
+                    <div key={att.id} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                      {isImage ? (
+                        <img src={att.dataUrl} alt={att.name} className="w-8 h-8 rounded object-cover shrink-0" />
+                      ) : (
+                        <Icon size={18} className="text-gray-400 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-700 truncate text-xs font-medium">{att.name}</p>
+                        <p className="text-gray-400 text-[11px]">{formatFileSize(att.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setRecordAttachments(prev => prev.filter(a => a.id !== att.id))}
+                        className="text-gray-400 hover:text-danger-500 p-1 shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <button type="submit" className="w-full bg-primary-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">
             Save Record
@@ -627,6 +771,57 @@ export default function ItemDetail() {
           </div>
         </div>
       </Modal>
+
+      {/* Attachment Preview Modal */}
+      <Modal open={previewAttachment !== null} onClose={() => setPreviewAttachment(null)} title={previewAttachment?.name || 'Preview'}>
+        {previewAttachment && (
+          <div className="space-y-3">
+            {previewAttachment.type.startsWith('image/') ? (
+              <img src={previewAttachment.dataUrl} alt={previewAttachment.name} className="w-full h-auto rounded-lg" />
+            ) : previewAttachment.type === 'application/pdf' ? (
+              <iframe src={previewAttachment.dataUrl} className="w-full h-[60vh] rounded-lg border border-gray-200" title={previewAttachment.name} />
+            ) : (
+              <div className="flex flex-col items-center py-8 text-center">
+                <File size={48} className="text-gray-300 mb-3" />
+                <p className="text-sm font-medium text-gray-700">{previewAttachment.name}</p>
+                <p className="text-xs text-gray-500 mt-1">{formatFileSize(previewAttachment.size)}</p>
+                <p className="text-xs text-gray-400 mt-3">This file type cannot be previewed in the browser.</p>
+              </div>
+            )}
+            <a
+              href={previewAttachment.dataUrl}
+              download={previewAttachment.name}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition"
+            >
+              <Download size={16} /> Download
+            </a>
+          </div>
+        )}
+      </Modal>
+
+      {/* Hidden file inputs */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/*,.pdf,.eml,.msg"
+        onChange={(e) => { handleFiles(e.target.files, 'new'); e.target.value = ''; }}
+        className="hidden"
+      />
+      <input
+        ref={attachFileInputRef}
+        type="file"
+        multiple
+        accept="image/*,.pdf,.eml,.msg"
+        onChange={(e) => {
+          if (attachToRecord) {
+            handleFiles(e.target.files, attachToRecord);
+            setAttachToRecord(null);
+          }
+          e.target.value = '';
+        }}
+        className="hidden"
+      />
     </div>
   );
 }
