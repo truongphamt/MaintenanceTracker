@@ -3,11 +3,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Edit2, Clock, Calendar,
   DollarSign, ChevronDown, ChevronUp, Home, Car, Wrench, Filter,
+  ArrowDownAZ, AlertTriangle, RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import EmptyState from '../components/EmptyState';
+import SortableList, { ReorderButton } from '../components/SortableList';
 import {
   getServiceStatus,
   getLastServiceDate,
@@ -17,6 +19,14 @@ import {
 } from '../utils';
 
 type DetailFilter = 'all' | 'overdue' | 'due-soon' | 'current';
+type SortMode = 'default' | 'name' | 'urgency';
+
+const statusPriority: Record<string, number> = {
+  'overdue': 0,
+  'due-soon': 1,
+  'current': 2,
+  'no-history': 3,
+};
 
 export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +36,9 @@ export default function ItemDetail() {
 
   const [expandedSub, setExpandedSub] = useState<string | null>(null);
   const [filter, setFilter] = useState<DetailFilter>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('default');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [reorderMode, setReorderMode] = useState(false);
   const [showAddSub, setShowAddSub] = useState(false);
   const [showAddRecord, setShowAddRecord] = useState<string | null>(null);
   const [showSchedule, setShowSchedule] = useState<string | null>(null);
@@ -47,12 +60,28 @@ export default function ItemDetail() {
 
   const filteredSubs = useMemo(() => {
     if (!item) return [];
-    if (filter === 'all') return item.subItems;
-    return item.subItems.filter(sub => {
-      const status = getServiceStatus(sub);
-      return status === filter;
-    });
-  }, [item, filter]);
+    let result = filter === 'all'
+      ? item.subItems
+      : item.subItems.filter(sub => getServiceStatus(sub) === filter);
+
+    if (sortMode === 'name') {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortMode === 'urgency') {
+      result = [...result].sort((a, b) => {
+        const pa = statusPriority[getServiceStatus(a)] ?? 9;
+        const pb = statusPriority[getServiceStatus(b)] ?? 9;
+        if (pa !== pb) return pa - pb;
+        const da = getNextDueDate(a);
+        const db = getNextDueDate(b);
+        if (da && db) return new Date(da).getTime() - new Date(db).getTime();
+        if (da) return -1;
+        if (db) return 1;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [item, filter, sortMode]);
 
   if (!item) {
     return (
@@ -179,7 +208,7 @@ export default function ItemDetail() {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <Filter size={14} className="text-gray-400" />
+        <Filter size={14} className="text-gray-400 shrink-0" />
         {(['all', 'overdue', 'due-soon', 'current'] as const).map(f => (
           <button
             key={f}
@@ -193,6 +222,57 @@ export default function ItemDetail() {
             {f === 'all' ? 'All' : f === 'due-soon' ? 'Due Soon' : f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
         ))}
+        <div className="ml-auto flex items-center gap-1.5">
+          {/* Sort button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSortMenu(!showSortMenu)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
+                sortMode !== 'default'
+                  ? 'bg-primary-100 text-primary-700 border border-primary-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent'
+              }`}
+            >
+              <ArrowDownAZ size={14} />
+              {sortMode === 'default' ? 'Sort' : sortMode === 'name' ? 'A-Z' : 'Urgent'}
+            </button>
+            {showSortMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 bg-white rounded-xl border border-gray-200 shadow-lg z-50 w-44 overflow-hidden">
+                  <button
+                    onClick={() => { setSortMode('name'); setShowSortMenu(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-left transition ${
+                      sortMode === 'name' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <ArrowDownAZ size={14} />
+                    Sort by Name
+                  </button>
+                  <button
+                    onClick={() => { setSortMode('urgency'); setShowSortMenu(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-left transition ${
+                      sortMode === 'urgency' ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <AlertTriangle size={14} />
+                    Sort by Urgency
+                  </button>
+                  {sortMode !== 'default' && (
+                    <button
+                      onClick={() => { setSortMode('default'); setShowSortMenu(false); }}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-left text-gray-500 hover:bg-gray-50 border-t border-gray-100 transition"
+                    >
+                      <RotateCcw size={14} />
+                      Reset to Default
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+          <ReorderButton active={reorderMode} onToggle={() => setReorderMode(!reorderMode)} itemCount={filteredSubs.length} />
+        </div>
       </div>
 
       {item.subItems.length === 0 ? (
@@ -210,15 +290,25 @@ export default function ItemDetail() {
           }
         />
       ) : (
-        <div className="space-y-2">
-          {filteredSubs.map(sub => {
+        <SortableList
+          isReorderMode={reorderMode}
+          showButton={false}
+          items={filteredSubs}
+          onReorder={(newIds) => {
+            const unfiltered = item.subItems.filter(si => !filteredSubs.some(fs => fs.id === si.id));
+            const reorderedFiltered = newIds.map(id => filteredSubs.find(si => si.id === id)!);
+            const allIds = [...reorderedFiltered, ...unfiltered].map(si => si.id);
+            dispatch({ type: 'REORDER_SUB_ITEMS', payload: { itemId: item.id, subItemIds: allIds } });
+          }}
+          className="space-y-2"
+          renderItem={(sub) => {
             const status = getServiceStatus(sub);
             const lastDate = getLastServiceDate(sub);
             const nextDue = getNextDueDate(sub);
             const isExpanded = expandedSub === sub.id;
 
             return (
-              <div key={sub.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <button
                   onClick={() => setExpandedSub(isExpanded ? null : sub.id)}
                   className="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-50 transition"
@@ -338,8 +428,8 @@ export default function ItemDetail() {
                 )}
               </div>
             );
-          })}
-        </div>
+          }}
+        />
       )}
 
       <button

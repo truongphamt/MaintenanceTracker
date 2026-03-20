@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Shield, Home, Car, Heart, Activity, Wrench,
   Plus, Search, ChevronRight, AlertTriangle, X,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import EmptyState from '../components/EmptyState';
+import SortableList, { ReorderButton } from '../components/SortableList';
 import { formatDate, daysFromNow } from '../utils';
 import type { InsuranceType } from '../types';
 
@@ -18,9 +19,11 @@ const typeConfig: Record<InsuranceType, { icon: typeof Shield; label: string; co
 };
 
 export default function InsuranceList() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<InsuranceType | 'all'>('all');
+  const [reorderMode, setReorderMode] = useState(false);
 
   const filtered = useMemo(() => {
     let result = state.policies;
@@ -93,52 +96,56 @@ export default function InsuranceList() {
         )}
       </div>
 
-      {/* Type filter chips */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        <button
-          onClick={() => setTypeFilter('all')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition ${
-            typeFilter === 'all'
-              ? 'bg-primary-50 text-primary-700 border-primary-300'
-              : 'bg-white text-gray-500 border-gray-200'
-          }`}
-        >
-          All ({state.policies.length})
-        </button>
-        {(['home', 'auto', 'health', 'life', 'other'] as InsuranceType[]).map(t => {
-          const count = state.policies.filter(p => p.type === t).length;
-          if (count === 0) return null;
-          return (
-            <button
-              key={t}
-              onClick={() => setTypeFilter(typeFilter === t ? 'all' : t)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition ${
-                typeFilter === t
-                  ? 'bg-primary-50 text-primary-700 border-primary-300'
-                  : 'bg-white text-gray-500 border-gray-200'
-              }`}
-            >
-              {typeConfig[t].label} ({count})
-            </button>
-          );
-        })}
+      {/* Type filter chips + reorder */}
+      <div className="flex gap-2 items-center">
+        <div className="flex gap-2 overflow-x-auto pb-1 flex-1 min-w-0">
+          <button
+            onClick={() => setTypeFilter('all')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition ${
+              typeFilter === 'all'
+                ? 'bg-primary-50 text-primary-700 border-primary-300'
+                : 'bg-white text-gray-500 border-gray-200'
+            }`}
+          >
+            All ({state.policies.length})
+          </button>
+          {(['home', 'auto', 'health', 'life', 'other'] as InsuranceType[]).map(t => {
+            const count = state.policies.filter(p => p.type === t).length;
+            if (count === 0) return null;
+            return (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(typeFilter === t ? 'all' : t)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition ${
+                  typeFilter === t
+                    ? 'bg-primary-50 text-primary-700 border-primary-300'
+                    : 'bg-white text-gray-500 border-gray-200'
+                }`}
+              >
+                {typeConfig[t].label} ({count})
+              </button>
+            );
+          })}
+        </div>
+        <ReorderButton active={reorderMode} onToggle={() => setReorderMode(!reorderMode)} itemCount={filtered.length} />
       </div>
 
       {/* Policy cards */}
-      <div className="space-y-2">
-        {filtered.map(policy => {
+      <SortableList
+        isReorderMode={reorderMode}
+        showButton={false}
+        items={filtered}
+        onReorder={(newIds) => dispatch({ type: 'REORDER_POLICIES', payload: newIds })}
+        className="space-y-2"
+        renderItem={(policy, isReorderMode) => {
           const cfg = typeConfig[policy.type];
           const Icon = cfg.icon;
           const daysLeft = daysFromNow(policy.expirationDate);
           const isExpired = daysLeft < 0;
           const expiringSoon = daysLeft >= 0 && daysLeft <= 30;
 
-          return (
-            <Link
-              key={policy.id}
-              to={`/insurance/${policy.id}`}
-              className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-4 hover:border-primary-300 transition active:bg-gray-50"
-            >
+          const content = (
+            <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-4 hover:border-primary-300 transition active:bg-gray-50">
               <div className={`p-2.5 rounded-lg ${cfg.color}`}>
                 <Icon size={20} />
               </div>
@@ -164,19 +171,27 @@ export default function InsuranceList() {
                 </p>
               </div>
               <ChevronRight size={16} className="text-gray-300 shrink-0" />
-            </Link>
+            </div>
           );
-        })}
 
-        {filtered.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-sm text-gray-500">No policies match your search.</p>
-            <button onClick={() => { setSearch(''); setTypeFilter('all'); }} className="text-sm text-primary-600 mt-1 hover:underline">
-              Clear filters
-            </button>
-          </div>
-        )}
-      </div>
+          if (isReorderMode) return content;
+
+          return (
+            <div onClick={() => navigate(`/insurance/${policy.id}`)} className="cursor-pointer">
+              {content}
+            </div>
+          );
+        }}
+      />
+
+      {filtered.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-sm text-gray-500">No policies match your search.</p>
+          <button onClick={() => { setSearch(''); setTypeFilter('all'); }} className="text-sm text-primary-600 mt-1 hover:underline">
+            Clear filters
+          </button>
+        </div>
+      )}
     </div>
   );
 }

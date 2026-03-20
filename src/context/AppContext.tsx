@@ -25,6 +25,9 @@ type Action =
   | { type: 'ADD_POLICY'; payload: Omit<InsurancePolicy, 'id' | 'createdAt'> }
   | { type: 'UPDATE_POLICY'; payload: InsurancePolicy }
   | { type: 'DELETE_POLICY'; payload: string }
+  | { type: 'REORDER_ITEMS'; payload: string[] }
+  | { type: 'REORDER_SUB_ITEMS'; payload: { itemId: string; subItemIds: string[] } }
+  | { type: 'REORDER_POLICIES'; payload: string[] }
   | { type: 'LOAD_STATE'; payload: AppState };
 
 const STORAGE_KEY = 'maintenance-tracker-data';
@@ -251,6 +254,39 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         policies: state.policies.filter(p => p.id !== action.payload),
       };
+
+    case 'REORDER_ITEMS': {
+      const orderMap = new Map(action.payload.map((id, idx) => [id, idx]));
+      const sorted = [...state.items].sort(
+        (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
+      );
+      return { ...state, items: sorted };
+    }
+
+    case 'REORDER_SUB_ITEMS': {
+      const orderMap = new Map(action.payload.subItemIds.map((id, idx) => [id, idx]));
+      return {
+        ...state,
+        items: state.items.map(item =>
+          item.id === action.payload.itemId
+            ? {
+                ...item,
+                subItems: [...item.subItems].sort(
+                  (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
+                ),
+              }
+            : item
+        ),
+      };
+    }
+
+    case 'REORDER_POLICIES': {
+      const orderMap = new Map(action.payload.map((id, idx) => [id, idx]));
+      const sorted = [...state.policies].sort(
+        (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
+      );
+      return { ...state, policies: sorted };
+    }
 
     default:
       return state;

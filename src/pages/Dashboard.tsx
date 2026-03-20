@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Home, Car, Wrench, ChevronRight, Filter, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
+import SortableList, { ReorderButton } from '../components/SortableList';
 import {
   getServiceStatus,
   getWorstStatus,
@@ -21,8 +22,10 @@ const categoryIcons = {
 };
 
 export default function Dashboard() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterType>('all');
+  const [reorderMode, setReorderMode] = useState(false);
 
   const stats = useMemo(() => {
     let overdue = 0, dueSoon = 0, current = 0, total = 0;
@@ -101,20 +104,32 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {filter !== 'all' && (
-        <div className="flex items-center gap-2">
-          <Filter size={14} className="text-gray-400" />
-          <span className="text-xs text-gray-500">
-            Showing: <span className="font-medium text-gray-700 capitalize">{filter === 'due-soon' ? 'Due Soon' : filter}</span>
-          </span>
-          <button onClick={() => setFilter('all')} className="text-xs text-primary-600 ml-auto hover:underline">
-            Clear Filter
-          </button>
+      <div className="flex items-center gap-2">
+        {filter !== 'all' ? (
+          <>
+            <Filter size={14} className="text-gray-400" />
+            <span className="text-xs text-gray-500">
+              Showing: <span className="font-medium text-gray-700 capitalize">{filter === 'due-soon' ? 'Due Soon' : filter}</span>
+            </span>
+            <button onClick={() => setFilter('all')} className="text-xs text-primary-600 hover:underline">
+              Clear
+            </button>
+          </>
+        ) : (
+          <span className="text-xs text-gray-400">{filteredItems.length} items</span>
+        )}
+        <div className="ml-auto">
+          <ReorderButton active={reorderMode} onToggle={() => setReorderMode(!reorderMode)} itemCount={filteredItems.length} />
         </div>
-      )}
+      </div>
 
-      <div className="space-y-3">
-        {filteredItems.map(item => {
+      <SortableList
+        isReorderMode={reorderMode}
+        showButton={false}
+        items={filteredItems}
+        onReorder={(newIds) => dispatch({ type: 'REORDER_ITEMS', payload: newIds })}
+        className="space-y-3"
+        renderItem={(item, isReorderMode) => {
           const worstStatus = getWorstStatus(item);
           const relevantSubs = filter === 'all'
             ? item.subItems
@@ -125,12 +140,8 @@ export default function Dashboard() {
                        s === 'current';
               });
 
-          return (
-            <Link
-              key={item.id}
-              to={`/items/${item.id}`}
-              className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-primary-300 transition active:bg-gray-50"
-            >
+          const content = (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 hover:border-primary-300 transition active:bg-gray-50">
               <div className="flex items-center gap-3 mb-3">
                 <div className={`p-2 rounded-lg ${
                   item.category === 'home' ? 'bg-blue-50 text-blue-600' :
@@ -152,7 +163,6 @@ export default function Dashboard() {
                   {relevantSubs.slice(0, 4).map(sub => {
                     const status = getServiceStatus(sub);
                     const lastDate = getLastServiceDate(sub);
-                    const nextDue = getNextDueDate(sub);
                     return (
                       <div key={sub.id} className="flex items-center justify-between text-sm">
                         <span className="text-gray-600 truncate flex-1">{sub.name}</span>
@@ -174,10 +184,18 @@ export default function Dashboard() {
                   )}
                 </div>
               )}
-            </Link>
+            </div>
           );
-        })}
-      </div>
+
+          if (isReorderMode) return content;
+
+          return (
+            <div onClick={() => navigate(`/items/${item.id}`)} className="cursor-pointer">
+              {content}
+            </div>
+          );
+        }}
+      />
     </div>
   );
 }
