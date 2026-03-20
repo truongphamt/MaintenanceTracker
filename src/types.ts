@@ -63,6 +63,6 @@ export interface InsurancePolicy {
   claimsPhone?: string;
   notes?: string;
   cardImageData?: string;
-  linkedItemId?: string;
+  linkedItemIds?: string[];
   createdAt: string;
 }

@@ -33,7 +33,7 @@ interface FormData {
   claimsPhone: string;
   notes: string;
   cardImageData: string;
-  linkedItemId: string;
+  linkedItemIds: string[];
 }
 
 const emptyForm: FormData = {
@@ -53,7 +53,7 @@ const emptyForm: FormData = {
   claimsPhone: '',
   notes: '',
   cardImageData: '',
-  linkedItemId: '',
+  linkedItemIds: [],
 };
 
 function parseOcrText(text: string, form: FormData): Partial<FormData> {
@@ -173,7 +173,7 @@ export default function InsuranceForm() {
         claimsPhone: existingPolicy.claimsPhone || '',
         notes: existingPolicy.notes || '',
         cardImageData: existingPolicy.cardImageData || '',
-        linkedItemId: existingPolicy.linkedItemId || '',
+        linkedItemIds: existingPolicy.linkedItemIds || [],
       };
     }
     return emptyForm;
@@ -184,8 +184,17 @@ export default function InsuranceForm() {
   const [ocrExtracted, setOcrExtracted] = useState<string[]>([]);
   const [showOcrResult, setShowOcrResult] = useState(false);
 
-  const update = (field: keyof FormData, value: string) => {
+  const update = (field: keyof FormData, value: string | string[]) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleLinkedItem = (itemId: string) => {
+    setForm(prev => ({
+      ...prev,
+      linkedItemIds: prev.linkedItemIds.includes(itemId)
+        ? prev.linkedItemIds.filter(id => id !== itemId)
+        : [...prev.linkedItemIds, itemId],
+    }));
   };
 
   const handleImageUpload = async (file: File) => {
@@ -257,7 +266,7 @@ export default function InsuranceForm() {
       claimsPhone: form.claimsPhone || undefined,
       notes: form.notes || undefined,
       cardImageData: form.cardImageData || undefined,
-      linkedItemId: form.linkedItemId || undefined,
+      linkedItemIds: form.linkedItemIds.length > 0 ? form.linkedItemIds : undefined,
     };
 
     if (isEditing && existingPolicy) {
@@ -496,18 +505,33 @@ export default function InsuranceForm() {
           <input type="tel" value={form.claimsPhone} onChange={e => update('claimsPhone', e.target.value)} placeholder="(800) 123-4567" className={inputClass} />
         </div>
 
-        {/* Link to maintenance item */}
+        {/* Link to maintenance items */}
         {state.items.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Link to Item <span className="text-gray-400 font-normal">(optional)</span>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Link to Items <span className="text-gray-400 font-normal">(optional, select multiple)</span>
             </label>
-            <select value={form.linkedItemId} onChange={e => update('linkedItemId', e.target.value)} className={inputClass}>
-              <option value="">None</option>
+            <div className="space-y-1.5">
               {state.items.map(item => (
-                <option key={item.id} value={item.id}>{item.name} ({item.category})</option>
+                <label
+                  key={item.id}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition ${
+                    form.linkedItemIds.includes(item.id)
+                      ? 'bg-primary-50 border-primary-300'
+                      : 'bg-white border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.linkedItemIds.includes(item.id)}
+                    onChange={() => toggleLinkedItem(item.id)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">{item.name}</span>
+                  <span className="text-xs text-gray-400 capitalize ml-auto">{item.category}</span>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
         )}
 

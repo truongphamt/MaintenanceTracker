@@ -74,7 +74,9 @@ export default function InsuranceDetail() {
   const daysLeft = daysFromNow(policy.expirationDate);
   const isExpired = daysLeft < 0;
   const expiringSoon = daysLeft >= 0 && daysLeft <= 30;
-  const linkedItem = policy.linkedItemId ? state.items.find(i => i.id === policy.linkedItemId) : null;
+  const linkedItems = (policy.linkedItemIds || [])
+    .map(id => state.items.find(i => i.id === id))
+    .filter(Boolean);
 
   const handleDelete = () => {
     dispatch({ type: 'DELETE_POLICY', payload: policy.id });
@@ -189,18 +191,25 @@ export default function InsuranceDetail() {
         </div>
       )}
 
-      {/* Linked item */}
-      {linkedItem && (
-        <Link
-          to={`/items/${linkedItem.id}`}
-          className="flex items-center gap-3 bg-primary-50 rounded-xl border border-primary-200 p-4 hover:bg-primary-100 transition"
-        >
-          <Shield size={16} className="text-primary-600" />
-          <span className="text-sm font-medium text-primary-700">
-            Linked to: {linkedItem.name}
-          </span>
-          <ChevronRight size={14} className="text-primary-400 ml-auto" />
-        </Link>
+      {/* Linked items */}
+      {linkedItems.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1">Linked Items</h3>
+          {linkedItems.map(li => (
+            <Link
+              key={li!.id}
+              to={`/items/${li!.id}`}
+              className="flex items-center gap-3 bg-primary-50 rounded-xl border border-primary-200 p-4 hover:bg-primary-100 transition"
+            >
+              <Shield size={16} className="text-primary-600" />
+              <span className="text-sm font-medium text-primary-700">
+                {li!.name}
+              </span>
+              <span className="text-xs text-primary-400 capitalize">{li!.category}</span>
+              <ChevronRight size={14} className="text-primary-400 ml-auto" />
+            </Link>
+          ))}
+        </div>
       )}
 
       {/* Full-size image modal */}

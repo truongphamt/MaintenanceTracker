@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Car, Wrench, ChevronRight, Filter, LayoutDashboard } from 'lucide-react';
+import { Home, Car, Wrench, ChevronRight, Filter, LayoutDashboard, Shield } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
@@ -140,6 +140,10 @@ export default function Dashboard() {
                        s === 'current';
               });
 
+          const linkedPolicies = state.policies.filter(
+            p => p.linkedItemIds?.includes(item.id)
+          );
+
           const content = (
             <div className="bg-white rounded-xl border border-gray-200 p-4 hover:border-primary-300 transition active:bg-gray-50">
               <div className="flex items-center gap-3 mb-3">
@@ -152,7 +156,22 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 truncate">{item.name}</h3>
-                  <p className="text-xs text-gray-500">{item.subItems.length} tracked services</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-gray-500">{item.subItems.length} tracked services</span>
+                    {linkedPolicies.map(policy => (
+                      <span
+                        key={policy.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/insurance/${policy.id}`);
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full hover:bg-primary-100 cursor-pointer transition"
+                      >
+                        <Shield size={10} />
+                        {policy.provider}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <StatusBadge status={worstStatus} />
                 <ChevronRight size={16} className="text-gray-300" />
