@@ -37,6 +37,7 @@ const STORAGE_KEY = 'maintenance-tracker-data';
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { items: [], notifications: [], policies: [] };
     const parsed = JSON.parse(raw);
     return { items: parsed.items || [], notifications: parsed.notifications || [], policies: parsed.policies || [] };
   } catch { /* ignore */ }

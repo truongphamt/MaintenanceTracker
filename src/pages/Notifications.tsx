@@ -2,7 +2,7 @@ import { Bell, Check, Trash2, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import EmptyState from '../components/EmptyState';
-import { formatDate, daysFromNow } from '../utils';
+import { daysFromNow } from '../utils';
 
 export default function Notifications() {
   const { state, dispatch } = useApp();
@@ -82,7 +82,7 @@ export default function Notifications() {
                     </span>
                     {item && (
                       <Link
-                        to={`/items/${item.id}`}
+                        to={`/services?item=${item.id}`}
                         className="text-xs text-primary-600 hover:underline flex items-center gap-0.5"
                       >
                         View <ExternalLink size={10} />

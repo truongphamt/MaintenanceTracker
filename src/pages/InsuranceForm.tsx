@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Camera, Upload, Loader2, CheckCircle2, AlertCircle,
-  Home, Car, Heart, Activity, Wrench, X, Image as ImageIcon,
+  Home, Car, Heart, Activity, Wrench, X,
 } from 'lucide-react';
 import Tesseract from 'tesseract.js';
 import { useApp } from '../context/AppContext';
@@ -56,7 +56,7 @@ const emptyForm: FormData = {
   linkedItemIds: [],
 };
 
-function parseOcrText(text: string, form: FormData): Partial<FormData> {
+function parseOcrText(text: string, _form: FormData): Partial<FormData> {
   const updates: Partial<FormData> = {};
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const full = text.replace(/\n/g, ' ');
@@ -224,7 +224,7 @@ export default function InsuranceForm() {
           const updated = { ...prev };
           for (const [key, value] of Object.entries(parsed)) {
             if (value && !prev[key as keyof FormData]) {
-              (updated as Record<string, string>)[key] = value as string;
+              (updated as unknown as Record<string, string>)[key] = value as string;
               extracted.push(`${key}: ${value}`);
             }
           }

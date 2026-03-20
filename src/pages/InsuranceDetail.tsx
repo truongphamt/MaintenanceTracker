@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Edit2, Trash2, Shield, Home, Car, Heart, Activity, Wrench,
-  Phone, User, FileText, DollarSign, Calendar, Hash, AlertTriangle, Image,
+  Phone, User, FileText, DollarSign, Calendar, Hash, AlertTriangle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Modal from '../components/Modal';
 import { formatDate, daysFromNow } from '../utils';
-import type { InsuranceType, InsurancePolicy } from '../types';
+import type { InsuranceType } from '../types';
 
 const typeConfig: Record<InsuranceType, { icon: typeof Shield; label: string; color: string }> = {
   home: { icon: Home, label: 'Homeowners', color: 'bg-blue-50 text-blue-600' },
@@ -17,12 +17,7 @@ const typeConfig: Record<InsuranceType, { icon: typeof Shield; label: string; co
   other: { icon: Wrench, label: 'Other', color: 'bg-gray-100 text-gray-600' },
 };
 
-const freqLabels: Record<string, string> = {
-  monthly: '/mo',
-  quarterly: '/qtr',
-  'semi-annual': '/6mo',
-  annual: '/yr',
-};
+
 
 function InfoRow({ icon: Icon, label, value, href, highlight }: {
   icon: typeof Phone;
@@ -198,7 +193,7 @@ export default function InsuranceDetail() {
           {linkedItems.map(li => (
             <Link
               key={li!.id}
-              to={`/items/${li!.id}`}
+              to={`/services?item=${li!.id}`}
               className="flex items-center gap-3 bg-primary-50 rounded-xl border border-primary-200 p-4 hover:bg-primary-100 transition"
             >
               <Shield size={16} className="text-primary-600" />

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Car, Wrench } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { generateId } from '../utils';
 import type { ItemCategory } from '../types';
 
 const categories: { value: ItemCategory; label: string; icon: typeof Home; color: string }[] = [
@@ -43,13 +42,9 @@ export default function AddItem() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const itemId = generateId();
     dispatch({ type: 'ADD_ITEM', payload: { name: name.trim(), category } });
 
-    // We need to wait a tick for the item to be in state before adding sub-items.
-    // Use setTimeout to defer sub-item dispatch calls.
     setTimeout(() => {
-      // Read the latest state from localStorage since we just dispatched
       try {
         const stored = JSON.parse(localStorage.getItem('maintenance-tracker-data') || '{}');
         const newItem = stored.items?.[stored.items.length - 1];
@@ -64,7 +59,7 @@ export default function AddItem() {
       } catch { /* fallback: sub-items can be added manually */ }
     }, 50);
 
-    navigate('/items');
+    navigate('/');
   };
 
   return (

@@ -1,15 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Car, Wrench, ChevronRight, Filter, LayoutDashboard, Shield } from 'lucide-react';
+import { Home, Car, Wrench, ChevronRight, Filter, LayoutDashboard, Shield, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
+import Modal from '../components/Modal';
 import SortableList, { ReorderButton } from '../components/SortableList';
 import {
   getServiceStatus,
   getWorstStatus,
   getLastServiceDate,
-  getNextDueDate,
   formatDate,
 } from '../utils';
 
@@ -26,6 +26,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterType>('all');
   const [reorderMode, setReorderMode] = useState(false);
+  const [showEditItem, setShowEditItem] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState<'home' | 'car' | 'other'>('home');
 
   const stats = useMemo(() => {
     let overdue = 0, dueSoon = 0, current = 0, total = 0;
@@ -74,6 +78,17 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
+        <Link
+          to="/add"
+          className="flex items-center gap-1.5 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition shadow-sm"
+        >
+          <Plus size={16} />
+          Add Item
+        </Link>
+      </div>
+
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => setFilter(f => f === 'overdue' ? 'all' : 'overdue')}
@@ -173,6 +188,30 @@ export default function Dashboard() {
                     ))}
                   </div>
                 </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditName(item.name);
+                      setEditCategory(item.category);
+                      setShowEditItem(item.id);
+                    }}
+                    className="text-gray-300 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition"
+                    title="Edit item"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteConfirm(item.id);
+                    }}
+                    className="text-gray-300 hover:text-danger-600 p-1.5 rounded-lg hover:bg-danger-50 transition"
+                    title="Delete item"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
                 <StatusBadge status={worstStatus} />
                 <ChevronRight size={16} className="text-gray-300" />
               </div>
@@ -209,12 +248,55 @@ export default function Dashboard() {
           if (isReorderMode) return content;
 
           return (
-            <div onClick={() => navigate(`/items/${item.id}`)} className="cursor-pointer">
+            <div onClick={() => navigate(`/services?item=${item.id}`)} className="cursor-pointer">
               {content}
             </div>
           );
         }}
       />
+
+      {/* Edit Item Modal */}
+      <Modal open={showEditItem !== null} onClose={() => setShowEditItem(null)} title="Edit Item">
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          if (showEditItem) {
+            dispatch({ type: 'UPDATE_ITEM', payload: { id: showEditItem, name: editName, category: editCategory } });
+            setShowEditItem(null);
+          }
+        }} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select value={editCategory} onChange={e => setEditCategory(e.target.value as 'home' | 'car' | 'other')} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+              <option value="home">Home</option>
+              <option value="car">Vehicle</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <button type="submit" className="w-full bg-primary-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">Save Changes</button>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={showDeleteConfirm !== null} onClose={() => setShowDeleteConfirm(null)} title="Delete Item">
+        {showDeleteConfirm && (() => {
+          const delItem = state.items.find(i => i.id === showDeleteConfirm);
+          return (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Are you sure you want to delete <strong>{delItem?.name}</strong>? This will remove all associated services and history. This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+                <button onClick={() => { dispatch({ type: 'DELETE_ITEM', payload: showDeleteConfirm }); setShowDeleteConfirm(null); }} className="flex-1 py-2.5 bg-danger-600 text-white rounded-lg text-sm font-semibold hover:bg-danger-500 transition">Delete</button>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
     </div>
   );
 }
