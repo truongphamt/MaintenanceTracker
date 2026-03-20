@@ -70,9 +70,9 @@ export default function InsuranceList() {
         <h2 className="text-lg font-semibold text-gray-900">Insurance</h2>
         <Link
           to="/insurance/add"
-          className="flex items-center gap-1 text-sm text-primary-600 font-medium hover:text-primary-700"
+          className="flex items-center gap-1.5 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition shadow-sm"
         >
-          <Plus size={16} /> Add
+          <Plus size={16} /> Add Policy
         </Link>
       </div>
 
