@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Home, Car, User, Wrench } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import type { ItemCategory } from '../types';
+import { generateId } from '../utils';
 
 const categories: { value: ItemCategory; label: string; icon: typeof Home; color: string }[] = [
   { value: 'home', label: 'Home', icon: Home, color: 'bg-blue-50 text-blue-600 border-blue-200' },
@@ -44,22 +45,14 @@ export default function AddItem() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    dispatch({ type: 'ADD_ITEM', payload: { name: name.trim(), category } });
-
-    setTimeout(() => {
-      try {
-        const stored = JSON.parse(localStorage.getItem('maintenance-tracker-data') || '{}');
-        const newItem = stored.items?.[stored.items.length - 1];
-        if (newItem && selectedSubs.length > 0) {
-          selectedSubs.forEach(subName => {
-            dispatch({
-              type: 'ADD_SUB_ITEM',
-              payload: { itemId: newItem.id, name: subName },
-            });
-          });
-        }
-      } catch { /* fallback: sub-items can be added manually */ }
-    }, 50);
+    const newItemId = generateId();
+    dispatch({ type: 'ADD_ITEM', payload: { id: newItemId, name: name.trim(), category } });
+    selectedSubs.forEach(subName => {
+      dispatch({
+        type: 'ADD_SUB_ITEM',
+        payload: { itemId: newItemId, name: subName },
+      });
+    });
 
     navigate('/');
   };

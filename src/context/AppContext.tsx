@@ -1,15 +1,13 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { MaintenanceItem, Notification, InsurancePolicy, Attachment } from '../types';
 import { generateId, getNextDueDate, formatDate } from '../utils';
+import { localDataService, localDataServiceSync } from '../services/localDataService';
+import type { AppState } from '../services/dataService';
 
-interface AppState {
-  items: MaintenanceItem[];
-  notifications: Notification[];
-  policies: InsurancePolicy[];
-}
+export type { AppState } from '../services/dataService';
 
 type Action =
-  | { type: 'ADD_ITEM'; payload: Omit<MaintenanceItem, 'id' | 'createdAt' | 'subItems'> }
+  | { type: 'ADD_ITEM'; payload: Omit<MaintenanceItem, 'id' | 'createdAt' | 'subItems'> & { id?: string } }
   | { type: 'UPDATE_ITEM'; payload: { id: string; name: string; category: MaintenanceItem['category'] } }
   | { type: 'DELETE_ITEM'; payload: string }
   | { type: 'ADD_SUB_ITEM'; payload: { itemId: string; name: string; intervalDays?: number; notes?: string } }
@@ -32,22 +30,6 @@ type Action =
   | { type: 'REORDER_POLICIES'; payload: string[] }
   | { type: 'LOAD_STATE'; payload: AppState };
 
-const STORAGE_KEY = 'maintenance-tracker-data';
-
-function loadState(): AppState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { items: [], notifications: [], policies: [] };
-    const parsed = JSON.parse(raw);
-    return { items: parsed.items || [], notifications: parsed.notifications || [], policies: parsed.policies || [] };
-  } catch { /* ignore */ }
-  return { items: [], notifications: [], policies: [] };
-}
-
-function saveState(state: AppState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'LOAD_STATE':
@@ -58,7 +40,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         items: [...state.items, {
           ...action.payload,
-          id: generateId(),
+          id: action.payload.id ?? generateId(),
           subItems: [],
           createdAt: new Date().toISOString(),
         }],
@@ -354,10 +336,10 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, loadState);
+  const [state, dispatch] = useReducer(reducer, undefined, localDataServiceSync.loadState);
 
   useEffect(() => {
-    saveState(state);
+    void localDataService.saveState(state);
   }, [state]);
 
   useEffect(() => {
