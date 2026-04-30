@@ -12,7 +12,7 @@ type Action =
   | { type: 'ADD_ITEM'; payload: Omit<MaintenanceItem, 'id' | 'createdAt' | 'subItems'> }
   | { type: 'UPDATE_ITEM'; payload: { id: string; name: string; category: MaintenanceItem['category'] } }
   | { type: 'DELETE_ITEM'; payload: string }
-  | { type: 'ADD_SUB_ITEM'; payload: { itemId: string; name: string; intervalDays?: number } }
+  | { type: 'ADD_SUB_ITEM'; payload: { itemId: string; name: string; intervalDays?: number; notes?: string } }
   | { type: 'UPDATE_SUB_ITEM'; payload: { itemId: string; subItemId: string; name: string; intervalDays?: number } }
   | { type: 'DELETE_SUB_ITEM'; payload: { itemId: string; subItemId: string } }
   | { type: 'ADD_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
@@ -92,6 +92,7 @@ function reducer(state: AppState, action: Action): AppState {
                   id: generateId(),
                   name: action.payload.name,
                   intervalDays: action.payload.intervalDays,
+                  notes: action.payload.notes,
                   history: [],
                   scheduled: [],
                 }],

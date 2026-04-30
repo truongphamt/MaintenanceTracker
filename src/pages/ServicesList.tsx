@@ -56,6 +56,7 @@ export default function ServicesList() {
   const [newServiceItemId, setNewServiceItemId] = useState('');
   const [newServiceName, setNewServiceName] = useState('');
   const [newServiceInterval, setNewServiceInterval] = useState('');
+  const [newServiceNotes, setNewServiceNotes] = useState('');
 
   useEffect(() => {
     const param = searchParams.get('item');
@@ -137,16 +138,19 @@ export default function ServicesList() {
   const handleAddService = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newServiceName.trim() || !newServiceItemId) return;
+    const trimmedNotes = newServiceNotes.trim();
     dispatch({
       type: 'ADD_SUB_ITEM',
       payload: {
         itemId: newServiceItemId,
         name: newServiceName.trim(),
         intervalDays: newServiceInterval ? parseInt(newServiceInterval) : undefined,
+        notes: trimmedNotes ? trimmedNotes : undefined,
       },
     });
     setNewServiceName('');
     setNewServiceInterval('');
+    setNewServiceNotes('');
     setNewServiceItemId('');
     setShowAddService(false);
   };
@@ -156,6 +160,7 @@ export default function ServicesList() {
     setNewServiceItemId(defaultItem);
     setNewServiceName('');
     setNewServiceInterval('');
+    setNewServiceNotes('');
     setShowAddService(true);
   };
 
@@ -431,6 +436,18 @@ export default function ServicesList() {
               onChange={e => setNewServiceInterval(e.target.value)}
               placeholder="e.g. 90 for every 3 months"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Notes <span className="text-gray-400 font-normal">optional</span>
+            </label>
+            <textarea
+              value={newServiceNotes}
+              onChange={e => setNewServiceNotes(e.target.value)}
+              placeholder="Any details to remember about this service..."
+              rows={3}
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
             />
           </div>
           <button type="submit" className="w-full bg-primary-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">

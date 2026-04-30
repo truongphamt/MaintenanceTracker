@@ -29,6 +29,7 @@ export interface SubItem {
   id: string;
   name: string;
   intervalDays?: number;
+  notes?: string;
   history: ServiceRecord[];
   scheduled: ScheduledService[];
 }
