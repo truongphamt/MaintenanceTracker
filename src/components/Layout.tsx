@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Home, List, Bell, Shield, Plus, Paperclip, X } from 'lucide-react';
+import { Home, List, Bell, Shield, Plus, Paperclip, X, Settings as SettingsIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Modal from './Modal';
 import type { Attachment } from '../types';
@@ -84,6 +84,17 @@ export default function Layout() {
           <h1 className="text-lg font-bold text-primary-700 tracking-tight">
             HomeBase
           </h1>
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `p-2 -mr-2 rounded-lg transition ${
+                isActive ? 'text-primary-600 bg-primary-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+              }`
+            }
+            aria-label="Settings"
+          >
+            <SettingsIcon size={20} />
+          </NavLink>
         </div>
       </header>
 

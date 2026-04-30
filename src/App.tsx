@@ -9,6 +9,7 @@ import Notifications from './pages/Notifications';
 import InsuranceList from './pages/InsuranceList';
 import InsuranceDetail from './pages/InsuranceDetail';
 import InsuranceForm from './pages/InsuranceForm';
+import Settings from './pages/Settings';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/insurance/add" element={<InsuranceForm />} />
             <Route path="/insurance/:id" element={<InsuranceDetail />} />
             <Route path="/insurance/:id/edit" element={<InsuranceForm />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </AppProvider>
