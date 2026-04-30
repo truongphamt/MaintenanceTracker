@@ -1,4 +1,4 @@
-export type ItemCategory = 'home' | 'car' | 'other';
+export type ItemCategory = 'home' | 'car' | 'person' | 'other';
 
 export interface Attachment {
   id: string;

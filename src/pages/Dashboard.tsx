@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Car, Wrench, ChevronRight, Filter, LayoutDashboard, Shield, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Home, Car, User, Wrench, ChevronRight, Filter, LayoutDashboard, Shield, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
 import Modal from '../components/Modal';
 import SortableList, { ReorderButton } from '../components/SortableList';
+import type { ItemCategory } from '../types';
 import {
   getServiceStatus,
   getWorstStatus,
@@ -15,9 +16,10 @@ import {
 
 type FilterType = 'all' | 'overdue' | 'due-soon' | 'current';
 
-const categoryIcons = {
+const categoryIcons: Record<ItemCategory, React.ReactNode> = {
   home: <Home size={20} />,
   car: <Car size={20} />,
+  person: <User size={20} />,
   other: <Wrench size={20} />,
 };
 
@@ -29,7 +31,7 @@ export default function Dashboard() {
   const [showEditItem, setShowEditItem] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [editCategory, setEditCategory] = useState<'home' | 'car' | 'other'>('home');
+  const [editCategory, setEditCategory] = useState<ItemCategory>('home');
 
   const stats = useMemo(() => {
     let overdue = 0, dueSoon = 0, current = 0, total = 0;
@@ -165,6 +167,7 @@ export default function Dashboard() {
                 <div className={`p-2 rounded-lg ${
                   item.category === 'home' ? 'bg-blue-50 text-blue-600' :
                   item.category === 'car' ? 'bg-purple-50 text-purple-600' :
+                  item.category === 'person' ? 'bg-emerald-50 text-emerald-600' :
                   'bg-gray-100 text-gray-600'
                 }`}>
                   {categoryIcons[item.category]}
@@ -270,9 +273,10 @@ export default function Dashboard() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <select value={editCategory} onChange={e => setEditCategory(e.target.value as 'home' | 'car' | 'other')} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+            <select value={editCategory} onChange={e => setEditCategory(e.target.value as ItemCategory)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
               <option value="home">Home</option>
               <option value="car">Vehicle</option>
+              <option value="person">Person</option>
               <option value="other">Other</option>
             </select>
           </div>

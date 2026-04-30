@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Shield, Home, Car, Heart, Activity, Wrench,
+  Shield, Home, Car, User, Heart, Activity, Wrench,
   Plus, Search, ChevronRight, AlertTriangle, X, Filter,
   ArrowDownAZ, RotateCcw, Calendar,
 } from 'lucide-react';
@@ -22,6 +22,7 @@ const typeConfig: Record<InsuranceType, { icon: typeof Shield; label: string; co
 const categoryIcons: Record<string, typeof Home> = {
   home: Home,
   car: Car,
+  person: User,
   other: Wrench,
 };
 

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Edit2, Clock, Calendar,
-  DollarSign, Home, Car, Wrench, Paperclip, FileText,
+  DollarSign, Home, Car, User, Wrench, Paperclip, FileText,
   Image as ImageIcon, Mail, File, Download, Eye, X,
 } from 'lucide-react';
 import type { Attachment } from '../types';
@@ -99,7 +99,11 @@ export default function ServiceDetail() {
   const status = getServiceStatus(sub);
   const lastDate = getLastServiceDate(sub);
   const nextDue = getNextDueDate(sub);
-  const Icon = item.category === 'home' ? Home : item.category === 'car' ? Car : Wrench;
+  const Icon =
+    item.category === 'home' ? Home :
+    item.category === 'car' ? Car :
+    item.category === 'person' ? User :
+    Wrench;
 
   const handleAddRecord = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,6 +160,7 @@ export default function ServiceDetail() {
         <div className={`p-2 rounded-lg ${
           item.category === 'home' ? 'bg-blue-50 text-blue-600' :
           item.category === 'car' ? 'bg-purple-50 text-purple-600' :
+          item.category === 'person' ? 'bg-emerald-50 text-emerald-600' :
           'bg-gray-100 text-gray-600'
         }`}>
           <Icon size={20} />

@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Car, Wrench } from 'lucide-react';
+import { Home, Car, User, Wrench } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import type { ItemCategory } from '../types';
 
 const categories: { value: ItemCategory; label: string; icon: typeof Home; color: string }[] = [
   { value: 'home', label: 'Home', icon: Home, color: 'bg-blue-50 text-blue-600 border-blue-200' },
   { value: 'car', label: 'Vehicle', icon: Car, color: 'bg-purple-50 text-purple-600 border-purple-200' },
+  { value: 'person', label: 'Person', icon: User, color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
   { value: 'other', label: 'Other', icon: Wrench, color: 'bg-gray-50 text-gray-600 border-gray-200' },
 ];
 
 const subItemSuggestions: Record<ItemCategory, string[]> = {
   home: ['Roof', 'HVAC Filter', 'Gutters', 'Paint', 'Plumbing', 'Electrical', 'Pest Control', 'Lawn Care', 'Water Heater', 'Smoke Detectors'],
   car: ['Oil Change', 'Tire Rotation', 'Air Filter', 'Brake Pads', 'Transmission Fluid', 'Coolant', 'Wiper Blades', 'Battery', 'Spark Plugs', 'Alignment'],
+  person: ['Annual Physical', 'Dentist', 'Eye Exam', 'Dermatology', 'Vaccinations', 'Blood Work', 'Specialist Visit', 'Therapy', 'Haircut'],
   other: ['General Maintenance', 'Cleaning', 'Inspection'],
 };
 
@@ -69,7 +71,7 @@ export default function AddItem() {
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             {categories.map(cat => {
               const Icon = cat.icon;
               return (
@@ -77,14 +79,14 @@ export default function AddItem() {
                   key={cat.value}
                   type="button"
                   onClick={() => { setCategory(cat.value); setSelectedSubs([]); }}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition ${
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition ${
                     category === cat.value
                       ? `${cat.color} border-current`
                       : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
                   }`}
                 >
-                  <Icon size={24} />
-                  <span className="text-sm font-medium">{cat.label}</span>
+                  <Icon size={22} />
+                  <span className="text-xs font-medium">{cat.label}</span>
                 </button>
               );
             })}
@@ -100,7 +102,12 @@ export default function AddItem() {
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder={category === 'home' ? 'e.g. Main House' : category === 'car' ? 'e.g. Honda Civic 2022' : 'e.g. Boat'}
+            placeholder={
+              category === 'home' ? 'e.g. Main House' :
+              category === 'car' ? 'e.g. Honda Civic 2022' :
+              category === 'person' ? 'e.g. Mom, Self, Kids' :
+              'e.g. Boat'
+            }
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
             required
           />

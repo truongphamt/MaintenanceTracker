@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  Wrench, Clock, Calendar, Home, Car, ChevronRight,
+  Wrench, Clock, Calendar, Home, Car, User, ChevronRight,
   Search, X, Filter, List, Plus, ArrowDownAZ, AlertTriangle, RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -30,6 +30,7 @@ type SortMode = 'default' | 'name' | 'urgency';
 const categoryIcons: Record<string, typeof Home> = {
   home: Home,
   car: Car,
+  person: User,
   other: Wrench,
 };
 
@@ -358,6 +359,7 @@ export default function ServicesList() {
                 <div className={`p-2 rounded-lg shrink-0 ${
                   item.category === 'home' ? 'bg-blue-50 text-blue-600' :
                   item.category === 'car' ? 'bg-purple-50 text-purple-600' :
+                  item.category === 'person' ? 'bg-emerald-50 text-emerald-600' :
                   'bg-gray-100 text-gray-600'
                 }`}>
                   <Icon size={18} />
