@@ -84,7 +84,6 @@ export default function Layout() {
           <h1 className="text-lg font-bold text-primary-700 tracking-tight">
             HomeBase
           </h1>
-          <span className="text-xs text-gray-400 font-medium">Maintenance Tracker</span>
         </div>
       </header>
 
