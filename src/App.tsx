@@ -11,9 +11,11 @@ import InsuranceDetail from './pages/InsuranceDetail';
 import InsuranceForm from './pages/InsuranceForm';
 import Settings from './pages/Settings';
 
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <BrowserRouter basename={routerBasename}>
       <AppProvider>
         <Routes>
           <Route element={<Layout />}>
