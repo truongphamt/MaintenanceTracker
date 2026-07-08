@@ -1,5 +1,5 @@
-import { differenceInDays, parseISO, format, isValid } from 'date-fns';
-import type { SubItem, ServiceStatus, MaintenanceItem } from './types';
+import { differenceInDays, parseISO, format, isValid, addDays, addMonths, addYears } from 'date-fns';
+import type { SubItem, ServiceStatus, MaintenanceItem, ServiceInterval, IntervalUnit } from './types';
 
 export function getLastServiceDate(subItem: SubItem): string | null {
   if (subItem.history.length === 0) return null;
@@ -7,6 +7,38 @@ export function getLastServiceDate(subItem: SubItem): string | null {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   return sorted[0].date;
+}
+
+/**
+ * Returns the interval to use for computing the next due date, preferring the
+ * new `interval` field but falling back to the legacy `intervalDays` so records
+ * saved before the interval enhancement still work.
+ */
+export function getEffectiveInterval(subItem: SubItem): ServiceInterval | null {
+  if (subItem.interval && subItem.interval.value > 0) return subItem.interval;
+  if (subItem.intervalDays && subItem.intervalDays > 0) {
+    return { value: subItem.intervalDays, unit: 'days' };
+  }
+  return null;
+}
+
+export function addInterval(date: Date, interval: ServiceInterval): Date {
+  switch (interval.unit) {
+    case 'days': return addDays(date, interval.value);
+    case 'months': return addMonths(date, interval.value);
+    case 'years': return addYears(date, interval.value);
+  }
+}
+
+const unitLabels: Record<IntervalUnit, [string, string]> = {
+  days: ['day', 'days'],
+  months: ['month', 'months'],
+  years: ['year', 'years'],
+};
+
+export function formatInterval(interval: ServiceInterval): string {
+  const [singular, plural] = unitLabels[interval.unit];
+  return `Every ${interval.value} ${interval.value === 1 ? singular : plural}`;
 }
 
 export function getNextDueDate(subItem: SubItem): string | null {
@@ -17,14 +49,13 @@ export function getNextDueDate(subItem: SubItem): string | null {
     return upcoming[0].dueDate;
   }
 
-  if (subItem.intervalDays && subItem.history.length > 0) {
+  const interval = getEffectiveInterval(subItem);
+  if (interval && subItem.history.length > 0) {
     const lastDate = getLastServiceDate(subItem);
     if (lastDate) {
       const d = parseISO(lastDate);
       if (isValid(d)) {
-        const next = new Date(d);
-        next.setDate(next.getDate() + subItem.intervalDays);
-        return format(next, 'yyyy-MM-dd');
+        return format(addInterval(d, interval), 'yyyy-MM-dd');
       }
     }
   }

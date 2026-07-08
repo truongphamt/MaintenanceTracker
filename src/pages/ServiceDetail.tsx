@@ -5,7 +5,7 @@ import {
   DollarSign, Home, Car, User, Wrench, Paperclip, FileText,
   Image as ImageIcon, Mail, File, Download, Eye, X,
 } from 'lucide-react';
-import type { Attachment } from '../types';
+import type { Attachment, IntervalUnit } from '../types';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
@@ -15,6 +15,8 @@ import {
   getNextDueDate,
   formatDate,
   daysFromNow,
+  getEffectiveInterval,
+  formatInterval,
 } from '../utils';
 
 export default function ServiceDetail() {
@@ -43,6 +45,7 @@ export default function ServiceDetail() {
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [editSubName, setEditSubName] = useState('');
   const [editSubInterval, setEditSubInterval] = useState('');
+  const [editSubIntervalUnit, setEditSubIntervalUnit] = useState<IntervalUnit>('months');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachFileInputRef = useRef<HTMLInputElement>(null);
@@ -138,11 +141,28 @@ export default function ServiceDetail() {
 
   const handleEditSub = (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = editSubInterval ? parseInt(editSubInterval) : NaN;
+    const interval = Number.isFinite(parsed) && parsed > 0
+      ? { value: parsed, unit: editSubIntervalUnit }
+      : undefined;
     dispatch({
       type: 'UPDATE_SUB_ITEM',
-      payload: { itemId: item.id, subItemId: sub.id, name: editSubName, intervalDays: editSubInterval ? parseInt(editSubInterval) : undefined },
+      payload: { itemId: item.id, subItemId: sub.id, name: editSubName, interval },
     });
     setShowEditSub(false);
+  };
+
+  const openEditSub = () => {
+    setEditSubName(sub.name);
+    const current = getEffectiveInterval(sub);
+    if (current) {
+      setEditSubInterval(String(current.value));
+      setEditSubIntervalUnit(current.unit);
+    } else {
+      setEditSubInterval('');
+      setEditSubIntervalUnit('months');
+    }
+    setShowEditSub(true);
   };
 
   const handleDelete = () => {
@@ -170,7 +190,7 @@ export default function ServiceDetail() {
           <p className="text-xs text-gray-500">{item.name}</p>
         </div>
         <button
-          onClick={() => { setEditSubName(sub.name); setEditSubInterval(sub.intervalDays?.toString() || ''); setShowEditSub(true); }}
+          onClick={openEditSub}
           className="text-gray-400 hover:text-gray-600 p-1"
         >
           <Edit2 size={16} />
@@ -186,12 +206,16 @@ export default function ServiceDetail() {
           <span className="text-sm text-gray-500">Status</span>
           <StatusBadge status={status} size="md" />
         </div>
-        {sub.intervalDays && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">Interval</span>
-            <span className="text-sm font-medium text-gray-700">Every {sub.intervalDays} days</span>
-          </div>
-        )}
+        {(() => {
+          const effective = getEffectiveInterval(sub);
+          if (!effective) return null;
+          return (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">Interval</span>
+              <span className="text-sm font-medium text-gray-700">{formatInterval(effective)}</span>
+            </div>
+          );
+        })()}
         {lastDate && (
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Last Serviced</span>
@@ -387,8 +411,29 @@ export default function ServiceDetail() {
             <input type="text" value={editSubName} onChange={e => setEditSubName(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Interval (days) <span className="text-gray-400 font-normal">optional</span></label>
-            <input type="number" value={editSubInterval} onChange={e => setEditSubInterval(e.target.value)} placeholder="e.g. 90" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Repeat Every <span className="text-gray-400 font-normal">optional</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min="1"
+                value={editSubInterval}
+                onChange={e => setEditSubInterval(e.target.value)}
+                placeholder="e.g. 6"
+                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              />
+              <select
+                value={editSubIntervalUnit}
+                onChange={e => setEditSubIntervalUnit(e.target.value as IntervalUnit)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white"
+              >
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">Leave blank if this service has no fixed cadence.</p>
           </div>
           <button type="submit" className="w-full bg-primary-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">Save Changes</button>
         </form>

@@ -16,7 +16,7 @@ import {
   formatDate,
   daysFromNow,
 } from '../utils';
-import type { SubItem, MaintenanceItem } from '../types';
+import type { SubItem, MaintenanceItem, IntervalUnit } from '../types';
 
 interface FlatService {
   id: string;
@@ -57,6 +57,7 @@ export default function ServicesList() {
   const [newServiceItemId, setNewServiceItemId] = useState('');
   const [newServiceName, setNewServiceName] = useState('');
   const [newServiceInterval, setNewServiceInterval] = useState('');
+  const [newServiceIntervalUnit, setNewServiceIntervalUnit] = useState<IntervalUnit>('months');
   const [newServiceNotes, setNewServiceNotes] = useState('');
 
   useEffect(() => {
@@ -140,17 +141,22 @@ export default function ServicesList() {
     e.preventDefault();
     if (!newServiceName.trim() || !newServiceItemId) return;
     const trimmedNotes = newServiceNotes.trim();
+    const intervalValue = newServiceInterval ? parseInt(newServiceInterval) : NaN;
+    const interval = Number.isFinite(intervalValue) && intervalValue > 0
+      ? { value: intervalValue, unit: newServiceIntervalUnit }
+      : undefined;
     dispatch({
       type: 'ADD_SUB_ITEM',
       payload: {
         itemId: newServiceItemId,
         name: newServiceName.trim(),
-        intervalDays: newServiceInterval ? parseInt(newServiceInterval) : undefined,
+        interval,
         notes: trimmedNotes ? trimmedNotes : undefined,
       },
     });
     setNewServiceName('');
     setNewServiceInterval('');
+    setNewServiceIntervalUnit('months');
     setNewServiceNotes('');
     setNewServiceItemId('');
     setShowAddService(false);
@@ -161,6 +167,7 @@ export default function ServicesList() {
     setNewServiceItemId(defaultItem);
     setNewServiceName('');
     setNewServiceInterval('');
+    setNewServiceIntervalUnit('months');
     setNewServiceNotes('');
     setShowAddService(true);
   };
@@ -430,15 +437,28 @@ export default function ServicesList() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Interval (days) <span className="text-gray-400 font-normal">optional</span>
+              Repeat Every <span className="text-gray-400 font-normal">optional</span>
             </label>
-            <input
-              type="number"
-              value={newServiceInterval}
-              onChange={e => setNewServiceInterval(e.target.value)}
-              placeholder="e.g. 90 for every 3 months"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min="1"
+                value={newServiceInterval}
+                onChange={e => setNewServiceInterval(e.target.value)}
+                placeholder="e.g. 6"
+                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+              />
+              <select
+                value={newServiceIntervalUnit}
+                onChange={e => setNewServiceIntervalUnit(e.target.value as IntervalUnit)}
+                className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white"
+              >
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">Auto-calculates the next due date from the last service.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

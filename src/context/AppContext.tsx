@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { MaintenanceItem, Notification, InsurancePolicy, Attachment } from '../types';
+import type { MaintenanceItem, Notification, InsurancePolicy, Attachment, ServiceInterval } from '../types';
 import { generateId, getNextDueDate, formatDate } from '../utils';
 import { localDataService, localDataServiceSync } from '../services/localDataService';
 import type { AppState } from '../services/dataService';
@@ -10,8 +10,8 @@ type Action =
   | { type: 'ADD_ITEM'; payload: Omit<MaintenanceItem, 'id' | 'createdAt' | 'subItems'> & { id?: string } }
   | { type: 'UPDATE_ITEM'; payload: { id: string; name: string; category: MaintenanceItem['category'] } }
   | { type: 'DELETE_ITEM'; payload: string }
-  | { type: 'ADD_SUB_ITEM'; payload: { itemId: string; name: string; intervalDays?: number; notes?: string } }
-  | { type: 'UPDATE_SUB_ITEM'; payload: { itemId: string; subItemId: string; name: string; intervalDays?: number } }
+  | { type: 'ADD_SUB_ITEM'; payload: { itemId: string; name: string; interval?: ServiceInterval; notes?: string } }
+  | { type: 'UPDATE_SUB_ITEM'; payload: { itemId: string; subItemId: string; name: string; interval?: ServiceInterval } }
   | { type: 'DELETE_SUB_ITEM'; payload: { itemId: string; subItemId: string } }
   | { type: 'ADD_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
   | { type: 'DELETE_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; recordId: string } }
@@ -73,7 +73,7 @@ function reducer(state: AppState, action: Action): AppState {
                 subItems: [...item.subItems, {
                   id: generateId(),
                   name: action.payload.name,
-                  intervalDays: action.payload.intervalDays,
+                  interval: action.payload.interval,
                   notes: action.payload.notes,
                   history: [],
                   scheduled: [],
@@ -92,7 +92,14 @@ function reducer(state: AppState, action: Action): AppState {
                 ...item,
                 subItems: item.subItems.map(si =>
                   si.id === action.payload.subItemId
-                    ? { ...si, name: action.payload.name, intervalDays: action.payload.intervalDays }
+                    ? {
+                        ...si,
+                        name: action.payload.name,
+                        interval: action.payload.interval,
+                        // Clear the legacy field so it can never override
+                        // the new value on subsequent reads.
+                        intervalDays: undefined,
+                      }
                     : si
                 ),
               }

@@ -25,10 +25,22 @@ export interface ScheduledService {
 
 export type ServiceStatus = 'current' | 'due-soon' | 'overdue' | 'no-history';
 
+export type IntervalUnit = 'days' | 'months' | 'years';
+
+export interface ServiceInterval {
+  value: number;
+  unit: IntervalUnit;
+}
+
 export interface SubItem {
   id: string;
   name: string;
+  /**
+   * Legacy field. New data uses `interval`. Kept so previously saved
+   * localStorage records continue to compute next-due correctly.
+   */
   intervalDays?: number;
+  interval?: ServiceInterval;
   notes?: string;
   history: ServiceRecord[];
   scheduled: ScheduledService[];
