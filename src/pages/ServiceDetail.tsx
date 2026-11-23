@@ -9,6 +9,7 @@ import type { Attachment, IntervalUnit } from '../types';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
+import SwipeRow from '../components/SwipeRow';
 import {
   getServiceStatus,
   getLastServiceDate,
@@ -28,6 +29,7 @@ export default function ServiceDetail() {
   const sub = item?.subItems.find(s => s.id === subId);
 
   const [showAddRecord, setShowAddRecord] = useState(false);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showEditSub, setShowEditSub] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -108,23 +110,56 @@ export default function ServiceDetail() {
     item.category === 'person' ? User :
     Wrench;
 
-  const handleAddRecord = (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch({
-      type: 'ADD_SERVICE_RECORD',
-      payload: {
-        itemId: item.id,
-        subItemId: sub.id,
-        date: recordDate,
-        notes: recordNotes,
-        cost: recordCost ? parseFloat(recordCost) : undefined,
-        attachments: recordAttachments.length > 0 ? recordAttachments : undefined,
-      },
-    });
+  const resetRecordForm = () => {
+    setEditingRecordId(null);
     setRecordDate(new Date().toISOString().split('T')[0]);
     setRecordNotes('');
     setRecordCost('');
     setRecordAttachments([]);
+  };
+
+  const openEditRecord = (recordId: string) => {
+    const record = sub.history.find(r => r.id === recordId);
+    if (!record) return;
+    setEditingRecordId(record.id);
+    setRecordDate(record.date.slice(0, 10));
+    setRecordNotes(record.notes);
+    setRecordCost(record.cost != null ? String(record.cost) : '');
+    setRecordAttachments(record.attachments ? [...record.attachments] : []);
+    setShowAddRecord(true);
+  };
+
+  const handleAddRecord = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cost = recordCost ? parseFloat(recordCost) : undefined;
+    const attachments = recordAttachments.length > 0 ? recordAttachments : undefined;
+    if (editingRecordId) {
+      dispatch({
+        type: 'UPDATE_SERVICE_RECORD',
+        payload: {
+          itemId: item.id,
+          subItemId: sub.id,
+          recordId: editingRecordId,
+          date: recordDate,
+          notes: recordNotes,
+          cost,
+          attachments,
+        },
+      });
+    } else {
+      dispatch({
+        type: 'ADD_SERVICE_RECORD',
+        payload: {
+          itemId: item.id,
+          subItemId: sub.id,
+          date: recordDate,
+          notes: recordNotes,
+          cost,
+          attachments,
+        },
+      });
+    }
+    resetRecordForm();
     setShowAddRecord(false);
   };
 
@@ -237,7 +272,7 @@ export default function ServiceDetail() {
       {/* Action buttons */}
       <div className="flex gap-2">
         <button
-          onClick={() => { setRecordDate(new Date().toISOString().split('T')[0]); setRecordNotes(''); setRecordCost(''); setRecordAttachments([]); setShowAddRecord(true); }}
+          onClick={() => { resetRecordForm(); setShowAddRecord(true); }}
           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition"
         >
           <Plus size={16} /> Log Service
@@ -281,7 +316,8 @@ export default function ServiceDetail() {
             {[...sub.history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => {
               const attachments = record.attachments || [];
               return (
-                <div key={record.id} className="py-2 border-b border-gray-50 last:border-0">
+                <SwipeRow key={record.id} onDelete={() => setDeleteRecordId(record.id)}>
+                <div className="py-2 border-b border-gray-50">
                   <div className="flex items-start justify-between text-sm">
                     <div>
                       <span className="font-medium text-gray-700">{formatDate(record.date)}</span>
@@ -294,6 +330,13 @@ export default function ServiceDetail() {
                         </span>
                       )}
                       <button
+                        onClick={() => openEditRecord(record.id)}
+                        className="text-gray-300 hover:text-primary-500 p-1"
+                        title="Edit record"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                      <button
                         onClick={() => { setAttachToRecord(record.id); attachFileInputRef.current?.click(); }}
                         className="text-gray-300 hover:text-primary-500 p-1"
                         title="Attach receipt"
@@ -303,6 +346,7 @@ export default function ServiceDetail() {
                       <button
                         onClick={() => setDeleteRecordId(record.id)}
                         className="text-gray-300 hover:text-danger-500 p-1"
+                        title="Delete record"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -331,6 +375,7 @@ export default function ServiceDetail() {
                     </div>
                   )}
                 </div>
+                </SwipeRow>
               );
             })}
           </div>
@@ -345,7 +390,7 @@ export default function ServiceDetail() {
       )}
 
       {/* Log Service Modal */}
-      <Modal open={showAddRecord} onClose={() => setShowAddRecord(false)} title="Log Service">
+      <Modal open={showAddRecord} onClose={() => { setShowAddRecord(false); setEditingRecordId(null); }} title={editingRecordId ? 'Edit Service Record' : 'Log Service'}>
         <form onSubmit={handleAddRecord} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
@@ -384,7 +429,7 @@ export default function ServiceDetail() {
               </div>
             )}
           </div>
-          <button type="submit" className="w-full bg-primary-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">Save Record</button>
+          <button type="submit" className="w-full bg-primary-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">{editingRecordId ? 'Save Changes' : 'Save Record'}</button>
         </form>
       </Modal>
 

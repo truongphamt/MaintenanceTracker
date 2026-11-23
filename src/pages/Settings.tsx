@@ -45,7 +45,7 @@ export default function Settings() {
     const today = new Date().toISOString().split('T')[0];
     const a = document.createElement('a');
     a.href = url;
-    a.download = `homebase-backup-${today}.json`;
+    a.download = `service-tracker-backup-${today}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -60,7 +60,7 @@ export default function Settings() {
       try {
         const parsed = JSON.parse(e.target?.result as string);
         if (!isValidBackup(parsed)) {
-          setFeedback({ kind: 'error', message: 'This file is not a valid HomeBase backup.' });
+          setFeedback({ kind: 'error', message: 'This file is not a valid Service Tracker backup.' });
           return;
         }
         if (parsed.version !== EXPORT_VERSION) {

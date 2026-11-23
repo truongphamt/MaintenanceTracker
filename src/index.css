@@ -33,6 +33,11 @@ body {
   @apply bg-gray-50 text-gray-900 min-h-screen;
 }
 
+/* Lifts the fixed tab bar above the iPhone home indicator. */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* iOS Safari auto-zooms into any focused form control whose computed
    font-size is < 16px. Force 16px on iOS only so the app's `text-sm`
    styling remains unchanged on desktop and Android, while pinch-zoom
@@ -43,4 +48,12 @@ body {
   select {
     font-size: 16px;
   }
+}
+
+/* Native date controls have a large intrinsic width and will paint over
+   the next column unless the grid cell is allowed to shrink them. */
+input[type='date'] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
 }

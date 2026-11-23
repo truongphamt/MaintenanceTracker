@@ -450,25 +450,25 @@ export default function InsuranceForm() {
           </div>
         </div>
 
-        {/* Dates */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
+        {/* Dates — same column widths as Premium and Frequency */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date *</label>
-            <input type="date" value={form.effectiveDate} onChange={e => update('effectiveDate', e.target.value)} className={inputClass} required />
+            <input type="date" value={form.effectiveDate} onChange={e => update('effectiveDate', e.target.value)} className={`${inputClass} min-w-0 max-w-full`} required />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date *</label>
-            <input type="date" value={form.expirationDate} onChange={e => update('expirationDate', e.target.value)} className={inputClass} required />
+            <input type="date" value={form.expirationDate} onChange={e => update('expirationDate', e.target.value)} className={`${inputClass} min-w-0 max-w-full`} required />
           </div>
         </div>
 
         {/* Financial */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Premium ($)</label>
             <input type="number" step="0.01" value={form.premium} onChange={e => update('premium', e.target.value)} placeholder="0.00" className={inputClass} />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
             <select value={form.premiumFrequency} onChange={e => update('premiumFrequency', e.target.value)} className={inputClass}>
               <option value="monthly">Monthly</option>

@@ -14,6 +14,8 @@ type Action =
   | { type: 'UPDATE_SUB_ITEM'; payload: { itemId: string; subItemId: string; name: string; interval?: ServiceInterval } }
   | { type: 'DELETE_SUB_ITEM'; payload: { itemId: string; subItemId: string } }
   | { type: 'ADD_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
+  | { type: 'LOG_NEW_SERVICE'; payload: { itemId: string; subItemId: string; name: string; interval?: ServiceInterval; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
+  | { type: 'UPDATE_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; recordId: string; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
   | { type: 'DELETE_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; recordId: string } }
   | { type: 'ADD_ATTACHMENT'; payload: { itemId: string; subItemId: string; recordId: string; attachment: Attachment } }
   | { type: 'DELETE_ATTACHMENT'; payload: { itemId: string; subItemId: string; recordId: string; attachmentId: string } }
@@ -136,6 +138,61 @@ function reducer(state: AppState, action: Action): AppState {
                           cost: action.payload.cost,
                           attachments: action.payload.attachments,
                         }],
+                      }
+                    : si
+                ),
+              }
+            : item
+        ),
+      };
+
+    case 'LOG_NEW_SERVICE':
+      return {
+        ...state,
+        items: state.items.map(item =>
+          item.id === action.payload.itemId
+            ? {
+                ...item,
+                subItems: [...item.subItems, {
+                  id: action.payload.subItemId,
+                  name: action.payload.name,
+                  interval: action.payload.interval,
+                  history: [{
+                    id: generateId(),
+                    date: action.payload.date,
+                    notes: action.payload.notes,
+                    cost: action.payload.cost,
+                    attachments: action.payload.attachments,
+                  }],
+                  scheduled: [],
+                }],
+              }
+            : item
+        ),
+      };
+
+    case 'UPDATE_SERVICE_RECORD':
+      return {
+        ...state,
+        items: state.items.map(item =>
+          item.id === action.payload.itemId
+            ? {
+                ...item,
+                subItems: item.subItems.map(si =>
+                  si.id === action.payload.subItemId
+                    ? {
+                        ...si,
+                        history: si.history.map(r =>
+                          r.id === action.payload.recordId
+                            ? {
+                                ...r,
+                                date: action.payload.date,
+                                notes: action.payload.notes,
+                                cost: action.payload.cost,
+                                attachments: action.payload.attachments,
+                              }
+                            : r
+                        ),
                       }
                     : si
                 ),

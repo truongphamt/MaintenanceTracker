@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Wrench, Clock, Calendar, Home, Car, User, ChevronRight,
-  Search, X, Filter, List, Plus, ArrowDownAZ, AlertTriangle, RotateCcw,
+  Search, X, List, Plus, ArrowDownAZ, AlertTriangle, RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
@@ -110,9 +110,23 @@ export default function ServicesList() {
       result = [...result].sort((a, b) => a.sub.name.localeCompare(b.sub.name));
     } else if (sortMode === 'urgency') {
       result = [...result].sort((a, b) => {
-        const pa = statusPriority[getServiceStatus(a.sub)] ?? 9;
-        const pb = statusPriority[getServiceStatus(b.sub)] ?? 9;
+        const statusA = getServiceStatus(a.sub);
+        const statusB = getServiceStatus(b.sub);
+        const pa = statusPriority[statusA] ?? 9;
+        const pb = statusPriority[statusB] ?? 9;
         if (pa !== pb) return pa - pb;
+
+        if (statusA === 'current') {
+          const la = getLastServiceDate(a.sub);
+          const lb = getLastServiceDate(b.sub);
+          if (la && lb) return new Date(lb).getTime() - new Date(la).getTime();
+          if (la) return -1;
+          if (lb) return 1;
+          return 0;
+        }
+
+        if (statusA === 'no-history') return 0;
+
         const da = getNextDueDate(a.sub);
         const db = getNextDueDate(b.sub);
         if (da && db) return new Date(da).getTime() - new Date(db).getTime();
@@ -258,9 +272,8 @@ export default function ServicesList() {
         })}
       </div>
 
-      {/* Status filter chips + Sort + Reorder */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Filter size={14} className="text-gray-400 shrink-0" />
+      {/* Status filter chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         {([
           { key: 'all', label: 'All', count: filtered.length },
           { key: 'overdue', label: 'Overdue', count: statusCounts.overdue },
@@ -271,7 +284,7 @@ export default function ServicesList() {
           <button
             key={f.key}
             onClick={() => setStatusFilter(f.key)}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap shrink-0 transition ${
               statusFilter === f.key
                 ? 'bg-primary-50 text-primary-700 border-primary-300'
                 : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
@@ -280,8 +293,10 @@ export default function ServicesList() {
             {f.label}{f.key !== 'all' && f.count > 0 ? ` (${f.count})` : ''}
           </button>
         ))}
+      </div>
 
-        <div className="ml-auto flex items-center gap-1.5">
+      <div className="flex items-center justify-end gap-1.5">
+        <div className="flex items-center gap-1.5">
           {/* Sort button */}
           <div className="relative">
             <button

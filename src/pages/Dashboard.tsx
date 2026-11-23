@@ -64,7 +64,7 @@ export default function Dashboard() {
     return (
       <EmptyState
         icon={<LayoutDashboard size={48} />}
-        title="Welcome to HomeBase"
+        title="Welcome to Service Tracker"
         description="Start by adding your first home, car, or other item to track maintenance."
         action={
           <Link
