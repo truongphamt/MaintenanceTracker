@@ -22,6 +22,13 @@ export default function SwipeRow({ children, onDelete, onEdit, className }: Prop
   const min = onDelete ? -REVEAL : 0;
   const max = onEdit ? REVEAL : 0;
 
+  // Run a revealed action, then slide the row closed so the button does not
+  // linger on screen after the modal/navigation it triggered.
+  const runAction = (action?: () => void) => {
+    action?.();
+    setOffset(0);
+  };
+
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button, a, input, textarea, select')) return;
     dragging.current = true;
@@ -87,7 +94,7 @@ export default function SwipeRow({ children, onDelete, onEdit, className }: Prop
       {onEdit && (
         <button
           type="button"
-          onClick={onEdit}
+          onClick={() => runAction(onEdit)}
           className="absolute inset-y-0 left-0 w-[88px] bg-primary-600 text-white text-xs font-semibold"
         >
           Edit
@@ -96,7 +103,7 @@ export default function SwipeRow({ children, onDelete, onEdit, className }: Prop
       {onDelete && (
         <button
           type="button"
-          onClick={onDelete}
+          onClick={() => runAction(onDelete)}
           className="absolute inset-y-0 right-0 w-[88px] bg-danger-600 text-white text-xs font-semibold"
         >
           Delete
