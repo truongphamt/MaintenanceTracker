@@ -188,25 +188,21 @@ export default function ServicesList() {
     setShowAddService(true);
   };
 
-  if (allServices.length === 0) {
+  if (state.items.length === 0) {
     return (
-      <>
-        <EmptyState
-          icon={<List size={48} />}
-          title="No Services Yet"
-          description="Add items and services to start tracking maintenance."
-          action={
-            <div className="flex gap-3">
-              <button
-                onClick={() => navigate('/add')}
-                className="bg-primary-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition"
-              >
-                Add Item
-              </button>
-            </div>
-          }
-        />
-      </>
+      <EmptyState
+        icon={<List size={48} />}
+        title="No Items Yet"
+        description="Add your first item, then track its services here."
+        action={
+          <button
+            onClick={() => navigate('/add')}
+            className="bg-primary-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-700 transition"
+          >
+            Add Item
+          </button>
+        }
+      />
     );
   }
 
@@ -368,13 +364,27 @@ export default function ServicesList() {
       {/* Services list */}
       {filtered.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-sm text-gray-500">No services match your filters.</p>
-          <button
-            onClick={() => { setSearch(''); setStatusFilter('all'); updateItemFilter('all'); setSortMode('default'); }}
-            className="text-sm text-primary-600 mt-1 hover:underline"
-          >
-            Clear all filters
-          </button>
+          {allServices.length === 0 ? (
+            <>
+              <p className="text-sm text-gray-500">No services yet for your items.</p>
+              <button
+                onClick={openAddService}
+                className="text-sm text-primary-600 mt-1 hover:underline"
+              >
+                Add your first service
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500">No services match your filters.</p>
+              <button
+                onClick={() => { setSearch(''); setStatusFilter('all'); updateItemFilter('all'); setSortMode('default'); }}
+                className="text-sm text-primary-600 mt-1 hover:underline"
+              >
+                Clear all filters
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <SortableList
@@ -441,7 +451,7 @@ export default function ServicesList() {
       <Modal open={showAddService} onClose={() => setShowAddService(false)} title="Add Service">
         <form onSubmit={handleAddService} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Parent Item</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Parent Item *</label>
             <select
               value={newServiceItemId}
               onChange={e => setNewServiceItemId(e.target.value)}
@@ -455,7 +465,7 @@ export default function ServicesList() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
             <input
               type="text"
               value={newServiceName}
@@ -468,7 +478,7 @@ export default function ServicesList() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Repeat Every <span className="text-gray-400 font-normal">optional</span>
+              Repeat Every
             </label>
             <div className="flex gap-2">
               <input
@@ -493,7 +503,7 @@ export default function ServicesList() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes <span className="text-gray-400 font-normal">optional</span>
+              Notes
             </label>
             <AutoGrowTextarea
               value={newServiceNotes}

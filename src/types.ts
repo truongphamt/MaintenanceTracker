@@ -12,6 +12,8 @@ export interface ServiceRecord {
   id: string;
   date: string;
   notes: string;
+  /** Person or company who completed the service. */
+  performedBy?: string;
   cost?: number;
   attachments?: Attachment[];
 }

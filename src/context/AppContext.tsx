@@ -13,9 +13,9 @@ type Action =
   | { type: 'ADD_SUB_ITEM'; payload: { itemId: string; name: string; interval?: ServiceInterval; notes?: string } }
   | { type: 'UPDATE_SUB_ITEM'; payload: { itemId: string; subItemId: string; name: string; interval?: ServiceInterval } }
   | { type: 'DELETE_SUB_ITEM'; payload: { itemId: string; subItemId: string } }
-  | { type: 'ADD_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
-  | { type: 'LOG_NEW_SERVICE'; payload: { itemId: string; subItemId: string; name: string; interval?: ServiceInterval; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
-  | { type: 'UPDATE_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; recordId: string; date: string; notes: string; cost?: number; attachments?: Attachment[] } }
+  | { type: 'ADD_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; date: string; notes: string; performedBy?: string; cost?: number; attachments?: Attachment[] } }
+  | { type: 'LOG_NEW_SERVICE'; payload: { itemId: string; subItemId: string; name: string; interval?: ServiceInterval; date: string; notes: string; performedBy?: string; cost?: number; attachments?: Attachment[] } }
+  | { type: 'UPDATE_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; recordId: string; date: string; notes: string; performedBy?: string; cost?: number; attachments?: Attachment[] } }
   | { type: 'DELETE_SERVICE_RECORD'; payload: { itemId: string; subItemId: string; recordId: string } }
   | { type: 'ADD_ATTACHMENT'; payload: { itemId: string; subItemId: string; recordId: string; attachment: Attachment } }
   | { type: 'DELETE_ATTACHMENT'; payload: { itemId: string; subItemId: string; recordId: string; attachmentId: string } }
@@ -135,6 +135,7 @@ function reducer(state: AppState, action: Action): AppState {
                           id: generateId(),
                           date: action.payload.date,
                           notes: action.payload.notes,
+                          performedBy: action.payload.performedBy,
                           cost: action.payload.cost,
                           attachments: action.payload.attachments,
                         }],
@@ -161,6 +162,7 @@ function reducer(state: AppState, action: Action): AppState {
                     id: generateId(),
                     date: action.payload.date,
                     notes: action.payload.notes,
+                    performedBy: action.payload.performedBy,
                     cost: action.payload.cost,
                     attachments: action.payload.attachments,
                   }],
@@ -188,6 +190,7 @@ function reducer(state: AppState, action: Action): AppState {
                                 ...r,
                                 date: action.payload.date,
                                 notes: action.payload.notes,
+                                performedBy: action.payload.performedBy,
                                 cost: action.payload.cost,
                                 attachments: action.payload.attachments,
                               }

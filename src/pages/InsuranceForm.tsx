@@ -510,7 +510,7 @@ export default function InsuranceForm() {
         {state.items.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Link to Items <span className="text-gray-400 font-normal">(optional, select multiple)</span>
+              Link to Items
             </label>
             <div className="space-y-1.5">
               {state.items.map(item => (

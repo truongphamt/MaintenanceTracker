@@ -18,6 +18,7 @@ export default function Layout() {
   const [logSubId, setLogSubId] = useState('');
   const [logDate, setLogDate] = useState('');
   const [logNotes, setLogNotes] = useState('');
+  const [logPerformedBy, setLogPerformedBy] = useState('');
   const [logCost, setLogCost] = useState('');
   const [logAttachments, setLogAttachments] = useState<Attachment[]>([]);
   const [newServiceName, setNewServiceName] = useState('');
@@ -42,6 +43,7 @@ export default function Layout() {
     setLogSubId(firstItem?.subItems[0]?.id || NEW_SERVICE);
     setLogDate(new Date().toISOString().split('T')[0]);
     setLogNotes('');
+    setLogPerformedBy('');
     setLogCost('');
     setLogAttachments([]);
     resetNewServiceFields();
@@ -78,6 +80,7 @@ export default function Layout() {
     if (!logItemId || !logSubId) return;
     const cost = logCost ? parseFloat(logCost) : undefined;
     const attachments = logAttachments.length > 0 ? logAttachments : undefined;
+    const performedBy = logPerformedBy.trim() || undefined;
 
     if (logSubId === NEW_SERVICE) {
       const name = newServiceName.trim();
@@ -95,6 +98,7 @@ export default function Layout() {
           interval,
           date: logDate,
           notes: logNotes,
+          performedBy,
           cost,
           attachments,
         },
@@ -107,6 +111,7 @@ export default function Layout() {
           subItemId: logSubId,
           date: logDate,
           notes: logNotes,
+          performedBy,
           cost,
           attachments,
         },
@@ -220,7 +225,7 @@ export default function Layout() {
         ) : (
           <form onSubmit={handleLogSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Item</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Item *</label>
               <select value={logItemId} onChange={e => handleItemChange(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required>
                 {state.items.map(it => (
                   <option key={it.id} value={it.id}>{it.name}</option>
@@ -228,7 +233,7 @@ export default function Layout() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Service *</label>
               <select value={logSubId} onChange={e => setLogSubId(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required>
                 <option value={NEW_SERVICE}>New…</option>
                 {availableSubs.map(s => (
@@ -239,7 +244,7 @@ export default function Layout() {
             {isNewService && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Service name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Service name *</label>
                   <input
                     type="text"
                     value={newServiceName}
@@ -251,7 +256,7 @@ export default function Layout() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Repeat every <span className="text-gray-400 font-normal">optional</span>
+                    Repeat every
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -277,7 +282,7 @@ export default function Layout() {
               </>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
               <input type="date" value={logDate} onChange={e => setLogDate(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
             </div>
             <div>
@@ -285,11 +290,15 @@ export default function Layout() {
               <AutoGrowTextarea value={logNotes} onChange={e => setLogNotes(e.target.value)} placeholder="What was done..." minRows={3} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($) <span className="text-gray-400 font-normal">optional</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Completed By</label>
+              <input type="text" value={logPerformedBy} onChange={e => setLogPerformedBy(e.target.value)} placeholder="Person or company" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($)</label>
               <input type="number" step="0.01" value={logCost} onChange={e => setLogCost(e.target.value)} placeholder="0.00" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Attachments <span className="text-gray-400 font-normal">optional</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Attachments</label>
               <button type="button" onClick={() => logFileRef.current?.click()} className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 font-medium hover:border-primary-400 hover:text-primary-600 transition">
                 <Paperclip size={16} /> Attach Files
               </button>

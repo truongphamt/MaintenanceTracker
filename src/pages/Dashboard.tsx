@@ -255,7 +255,7 @@ export default function Dashboard() {
           }
         }} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
             <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
           </div>
           <div>

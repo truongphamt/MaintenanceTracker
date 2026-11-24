@@ -88,7 +88,7 @@ export default function AddItem() {
 
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Name
+            Name *
           </label>
           <input
             id="name"
@@ -108,7 +108,7 @@ export default function AddItem() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Services to Track <span className="text-gray-400 font-normal">(optional)</span>
+            Services to Track
           </label>
           <div className="flex flex-wrap gap-2 mb-3">
             {subItemSuggestions[category].map(sub => (

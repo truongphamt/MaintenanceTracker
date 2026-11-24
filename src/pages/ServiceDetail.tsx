@@ -40,6 +40,7 @@ export default function ServiceDetail() {
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
   const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
   const [recordNotes, setRecordNotes] = useState('');
+  const [recordPerformedBy, setRecordPerformedBy] = useState('');
   const [recordCost, setRecordCost] = useState('');
   const [recordAttachments, setRecordAttachments] = useState<Attachment[]>([]);
   const [scheduleDate, setScheduleDate] = useState('');
@@ -105,6 +106,7 @@ export default function ServiceDetail() {
     setEditingRecordId(null);
     setRecordDate(new Date().toISOString().split('T')[0]);
     setRecordNotes('');
+    setRecordPerformedBy('');
     setRecordCost('');
     setRecordAttachments([]);
   };
@@ -115,6 +117,7 @@ export default function ServiceDetail() {
     setEditingRecordId(record.id);
     setRecordDate(record.date.slice(0, 10));
     setRecordNotes(record.notes);
+    setRecordPerformedBy(record.performedBy ?? '');
     setRecordCost(record.cost != null ? String(record.cost) : '');
     setRecordAttachments(record.attachments ? [...record.attachments] : []);
     setShowAddRecord(true);
@@ -124,6 +127,7 @@ export default function ServiceDetail() {
     e.preventDefault();
     const cost = recordCost ? parseFloat(recordCost) : undefined;
     const attachments = recordAttachments.length > 0 ? recordAttachments : undefined;
+    const performedBy = recordPerformedBy.trim() || undefined;
     if (editingRecordId) {
       dispatch({
         type: 'UPDATE_SERVICE_RECORD',
@@ -133,6 +137,7 @@ export default function ServiceDetail() {
           recordId: editingRecordId,
           date: recordDate,
           notes: recordNotes,
+          performedBy,
           cost,
           attachments,
         },
@@ -145,6 +150,7 @@ export default function ServiceDetail() {
           subItemId: sub.id,
           date: recordDate,
           notes: recordNotes,
+          performedBy,
           cost,
           attachments,
         },
@@ -302,6 +308,7 @@ export default function ServiceDetail() {
                     <div>
                       <span className="font-medium text-gray-700">{formatDate(record.date)}</span>
                       {record.notes && <p className="text-gray-500 text-xs mt-0.5">{record.notes}</p>}
+                      {record.performedBy && <p className="text-gray-400 text-xs mt-0.5">By {record.performedBy}</p>}
                     </div>
                     {record.cost != null && (
                       <span className="text-xs font-semibold text-gray-900 flex items-center gap-0.5 shrink-0 ml-2">
@@ -350,7 +357,7 @@ export default function ServiceDetail() {
       <Modal open={showAddRecord} onClose={() => { setShowAddRecord(false); setEditingRecordId(null); }} title={editingRecordId ? 'Edit Service Record' : 'Log Service'}>
         <form onSubmit={handleAddRecord} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
             <input type="date" value={recordDate} onChange={e => setRecordDate(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
           </div>
           <div>
@@ -358,11 +365,15 @@ export default function ServiceDetail() {
             <AutoGrowTextarea value={recordNotes} onChange={e => setRecordNotes(e.target.value)} placeholder="What was done..." minRows={3} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($) <span className="text-gray-400 font-normal">optional</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Completed By</label>
+            <input type="text" value={recordPerformedBy} onChange={e => setRecordPerformedBy(e.target.value)} placeholder="Person or company" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($)</label>
             <input type="number" step="0.01" value={recordCost} onChange={e => setRecordCost(e.target.value)} placeholder="0.00" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Receipts / Attachments <span className="text-gray-400 font-normal">optional</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Receipts / Attachments</label>
             <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 font-medium hover:border-primary-400 hover:text-primary-600 transition">
               <Paperclip size={16} /> Attach Files
             </button>
@@ -394,7 +405,7 @@ export default function ServiceDetail() {
       <Modal open={showSchedule} onClose={() => setShowSchedule(false)} title="Schedule Service">
         <form onSubmit={handleSchedule} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date *</label>
             <input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
           </div>
           <div>
@@ -409,12 +420,12 @@ export default function ServiceDetail() {
       <Modal open={showEditSub} onClose={() => setShowEditSub(false)} title="Edit Service">
         <form onSubmit={handleEditSub} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Service Name *</label>
             <input type="text" value={editSubName} onChange={e => setEditSubName(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Repeat Every <span className="text-gray-400 font-normal">optional</span>
+              Repeat Every
             </label>
             <div className="flex gap-2">
               <input
