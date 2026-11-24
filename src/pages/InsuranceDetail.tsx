@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Edit2, Trash2, Shield, Home, Car, Heart, Activity, Wrench,
+  ArrowLeft, Shield, Home, Car, Heart, Activity, Wrench,
   Phone, User, FileText, DollarSign, Calendar, Hash, AlertTriangle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Modal from '../components/Modal';
+import SwipeRow from '../components/SwipeRow';
 import { formatDate, daysFromNow } from '../utils';
 import type { InsuranceType } from '../types';
 
@@ -92,15 +93,6 @@ export default function InsuranceDetail() {
           <h2 className="text-lg font-semibold text-gray-900 truncate">{policy.provider}</h2>
           <p className="text-xs text-gray-500">{cfg.label} Insurance</p>
         </div>
-        <Link
-          to={`/insurance/${policy.id}/edit`}
-          className="text-gray-400 hover:text-gray-600 p-1"
-        >
-          <Edit2 size={16} />
-        </Link>
-        <button onClick={() => setShowDelete(true)} className="text-gray-400 hover:text-danger-600 p-1">
-          <Trash2 size={16} />
-        </button>
       </div>
 
       {/* Expiration banner */}
@@ -139,7 +131,12 @@ export default function InsuranceDetail() {
         </button>
       )}
 
-      {/* Policy details */}
+      {/* Policy details — swipe right to edit, left to delete */}
+      <SwipeRow
+        className="rounded-xl"
+        onEdit={() => navigate(`/insurance/${policy.id}/edit`)}
+        onDelete={() => setShowDelete(true)}
+      >
       <div className="bg-white rounded-xl border border-gray-200 px-4 py-1">
         <InfoRow icon={Hash} label="Policy Number" value={policy.policyNumber} />
         {policy.groupNumber && <InfoRow icon={Hash} label="Group Number" value={policy.groupNumber} />}
@@ -152,6 +149,7 @@ export default function InsuranceDetail() {
           highlight={isExpired || expiringSoon}
         />
       </div>
+      </SwipeRow>
 
       {/* Financial details */}
       {(policy.premium || policy.deductible || policy.coverageAmount) && (

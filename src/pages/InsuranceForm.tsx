@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Tesseract from 'tesseract.js';
 import { useApp } from '../context/AppContext';
+import AutoGrowTextarea from '../components/AutoGrowTextarea';
 import type { InsuranceType, InsurancePolicy } from '../types';
 
 const typeOptions: { value: InsuranceType; label: string; icon: typeof Home }[] = [
@@ -451,14 +452,14 @@ export default function InsuranceForm() {
         </div>
 
         {/* Dates — same column widths as Premium and Frequency */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:grid-cols-3 gap-4">
+          <div className="min-w-0 overflow-hidden">
             <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date *</label>
-            <input type="date" value={form.effectiveDate} onChange={e => update('effectiveDate', e.target.value)} className={`${inputClass} min-w-0 max-w-full`} required />
+            <input type="date" value={form.effectiveDate} onChange={e => update('effectiveDate', e.target.value)} className="w-full min-w-0 max-w-full px-1.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 overflow-hidden">
             <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date *</label>
-            <input type="date" value={form.expirationDate} onChange={e => update('expirationDate', e.target.value)} className={`${inputClass} min-w-0 max-w-full`} required />
+            <input type="date" value={form.expirationDate} onChange={e => update('expirationDate', e.target.value)} className="w-full min-w-0 max-w-full px-1.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" required />
           </div>
         </div>
 
@@ -538,7 +539,7 @@ export default function InsuranceForm() {
         {/* Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea value={form.notes} onChange={e => update('notes', e.target.value)} placeholder="Additional details..." rows={3} className={`${inputClass} resize-none`} />
+          <AutoGrowTextarea value={form.notes} onChange={e => update('notes', e.target.value)} placeholder="Additional details..." minRows={4} className={`${inputClass} resize-none`} />
         </div>
 
         <button

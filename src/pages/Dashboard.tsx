@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Car, User, Wrench, ChevronRight, Filter, LayoutDashboard, Shield, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Home, Car, User, Wrench, ChevronRight, Filter, LayoutDashboard, Shield, Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
 import Modal from '../components/Modal';
+import SwipeRow from '../components/SwipeRow';
 import SortableList, { ReorderButton } from '../components/SortableList';
 import type { ItemCategory } from '../types';
 import {
@@ -191,30 +192,6 @@ export default function Dashboard() {
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditName(item.name);
-                      setEditCategory(item.category);
-                      setShowEditItem(item.id);
-                    }}
-                    className="text-gray-300 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition"
-                    title="Edit item"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDeleteConfirm(item.id);
-                    }}
-                    className="text-gray-300 hover:text-danger-600 p-1.5 rounded-lg hover:bg-danger-50 transition"
-                    title="Delete item"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
                 <StatusBadge status={worstStatus} />
                 <ChevronRight size={16} className="text-gray-300" />
               </div>
@@ -251,9 +228,19 @@ export default function Dashboard() {
           if (isReorderMode) return content;
 
           return (
-            <div onClick={() => navigate(`/services?item=${item.id}`)} className="cursor-pointer">
-              {content}
-            </div>
+            <SwipeRow
+              className="rounded-xl"
+              onEdit={() => {
+                setEditName(item.name);
+                setEditCategory(item.category);
+                setShowEditItem(item.id);
+              }}
+              onDelete={() => setShowDeleteConfirm(item.id)}
+            >
+              <div onClick={() => navigate(`/services?item=${item.id}`)} className="cursor-pointer">
+                {content}
+              </div>
+            </SwipeRow>
           );
         }}
       />

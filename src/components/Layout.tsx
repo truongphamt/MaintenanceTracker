@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { Home, List, Bell, Shield, Plus, Paperclip, X, Settings as SettingsIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Modal from './Modal';
+import AutoGrowTextarea from './AutoGrowTextarea';
 import { generateId } from '../utils';
 import type { Attachment, IntervalUnit } from '../types';
 
@@ -138,41 +139,41 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-4 pb-32">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-4 pb-24">
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 safe-area-bottom">
-        <div className="max-w-4xl mx-auto flex items-end">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+        <div className="max-w-4xl mx-auto flex items-end tab-bar-inset">
           <NavLink
             to="/"
             end
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center py-3 text-xs font-medium transition-colors ${
+              `flex-1 flex flex-col items-center py-5 text-xs font-medium transition-colors ${
                 isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
               }`
             }
           >
             <Home size={20} />
-            <span className="mt-1">Dashboard</span>
+            <span className="mt-0.5">Dashboard</span>
           </NavLink>
           <NavLink
             to="/services"
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center py-3 text-xs font-medium transition-colors ${
+              `flex-1 flex flex-col items-center py-5 text-xs font-medium transition-colors ${
                 isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
               }`
             }
           >
             <List size={20} />
-            <span className="mt-1">Services</span>
+            <span className="mt-0.5">Services</span>
           </NavLink>
 
           {/* Center "+" button */}
           <div className="flex-1 flex justify-center">
             <button
               onClick={openLogService}
-              className="relative -top-3 w-12 h-12 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-700 active:scale-95 transition"
+              className="relative -top-3 w-16 h-16 bg-primary-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-700 active:scale-95 transition"
             >
               <Plus size={24} strokeWidth={2.5} />
             </button>
@@ -181,18 +182,18 @@ export default function Layout() {
           <NavLink
             to="/insurance"
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center py-3 text-xs font-medium transition-colors ${
+              `flex-1 flex flex-col items-center py-5 text-xs font-medium transition-colors ${
                 isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
               }`
             }
           >
             <Shield size={20} />
-            <span className="mt-1">Insurance</span>
+            <span className="mt-0.5">Insurance</span>
           </NavLink>
           <NavLink
             to="/notifications"
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center py-3 text-xs font-medium transition-colors relative ${
+              `flex-1 flex flex-col items-center py-5 text-xs font-medium transition-colors relative ${
                 isActive ? 'text-primary-600' : 'text-gray-400 hover:text-gray-600'
               }`
             }
@@ -205,7 +206,7 @@ export default function Layout() {
                 </span>
               )}
             </div>
-            <span className="mt-1">Alerts</span>
+            <span className="mt-0.5">Alerts</span>
           </NavLink>
         </div>
       </nav>
@@ -281,7 +282,7 @@ export default function Layout() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea value={logNotes} onChange={e => setLogNotes(e.target.value)} placeholder="What was done..." rows={2} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
+              <AutoGrowTextarea value={logNotes} onChange={e => setLogNotes(e.target.value)} placeholder="What was done..." minRows={3} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($) <span className="text-gray-400 font-normal">optional</span></label>

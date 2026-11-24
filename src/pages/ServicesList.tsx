@@ -2,13 +2,14 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Wrench, Clock, Calendar, Home, Car, User, ChevronRight,
-  Search, X, List, Plus, ArrowDownAZ, AlertTriangle, RotateCcw,
+  Search, X, List, Plus, ArrowDownAZ, AlertTriangle, RotateCcw, Filter,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import EmptyState from '../components/EmptyState';
 import SortableList, { ReorderButton } from '../components/SortableList';
 import Modal from '../components/Modal';
+import AutoGrowTextarea from '../components/AutoGrowTextarea';
 import {
   getServiceStatus,
   getLastServiceDate,
@@ -52,6 +53,7 @@ export default function ServicesList() {
   const [search, setSearch] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('default');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
   const [showAddService, setShowAddService] = useState(false);
   const [newServiceItemId, setNewServiceItemId] = useState('');
@@ -272,35 +274,49 @@ export default function ServicesList() {
         })}
       </div>
 
-      {/* Status filter chips */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {([
-          { key: 'all', label: 'All', count: filtered.length },
-          { key: 'overdue', label: 'Overdue', count: statusCounts.overdue },
-          { key: 'due-soon', label: 'Due Soon', count: statusCounts['due-soon'] },
-          { key: 'current', label: 'Current', count: statusCounts.current },
-          { key: 'no-history', label: 'No History', count: statusCounts['no-history'] },
-        ] as const).map(f => (
-          <button
-            key={f.key}
-            onClick={() => setStatusFilter(f.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap shrink-0 transition ${
-              statusFilter === f.key
-                ? 'bg-primary-50 text-primary-700 border-primary-300'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            {f.label}{f.key !== 'all' && f.count > 0 ? ` (${f.count})` : ''}
-          </button>
-        ))}
-      </div>
-
       <div className="flex items-center justify-end gap-1.5">
         <div className="flex items-center gap-1.5">
-          {/* Sort button */}
           <div className="relative">
             <button
-              onClick={() => setShowSortMenu(!showSortMenu)}
+              onClick={() => { setShowFilterMenu(!showFilterMenu); setShowSortMenu(false); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
+                statusFilter !== 'all'
+                  ? 'bg-primary-100 text-primary-700 border border-primary-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent'
+              }`}
+            >
+              <Filter size={14} />
+              {statusFilter === 'all' ? 'Filter' : statusFilter === 'due-soon' ? 'Due Soon' : statusFilter === 'no-history' ? 'No History' : statusFilter === 'overdue' ? 'Overdue' : 'Current'}
+            </button>
+            {showFilterMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowFilterMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 bg-white rounded-xl border border-gray-200 shadow-lg z-50 w-44 overflow-hidden">
+                  {([
+                    { key: 'all', label: 'All', count: statusCounts.overdue + statusCounts['due-soon'] + statusCounts.current + statusCounts['no-history'] },
+                    { key: 'overdue', label: 'Overdue', count: statusCounts.overdue },
+                    { key: 'due-soon', label: 'Due Soon', count: statusCounts['due-soon'] },
+                    { key: 'current', label: 'Current', count: statusCounts.current },
+                    { key: 'no-history', label: 'No History', count: statusCounts['no-history'] },
+                  ] as const).map(f => (
+                    <button
+                      key={f.key}
+                      onClick={() => { setStatusFilter(f.key); setShowFilterMenu(false); }}
+                      className={`w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 text-xs text-left transition ${
+                        statusFilter === f.key ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span>{f.label}</span>
+                      <span className="text-gray-400">{f.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => { setShowSortMenu(!showSortMenu); setShowFilterMenu(false); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
                 sortMode !== 'default'
                   ? 'bg-primary-100 text-primary-700 border border-primary-300'
@@ -479,11 +495,11 @@ export default function ServicesList() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Notes <span className="text-gray-400 font-normal">optional</span>
             </label>
-            <textarea
+            <AutoGrowTextarea
               value={newServiceNotes}
               onChange={e => setNewServiceNotes(e.target.value)}
               placeholder="Any details to remember about this service..."
-              rows={3}
+              minRows={4}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
             />
           </div>

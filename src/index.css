@@ -33,9 +33,10 @@ body {
   @apply bg-gray-50 text-gray-900 min-h-screen;
 }
 
-/* Lifts the fixed tab bar above the iPhone home indicator. */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+/* Pulls Dashboard and Alerts inside the iPhone's rounded corners. */
+.tab-bar-inset {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
 }
 
 /* iOS Safari auto-zooms into any focused form control whose computed
@@ -48,12 +49,44 @@ body {
   select {
     font-size: 16px;
   }
+
+  /* iOS gives date inputs a large fixed intrinsic width and ignores
+     `width: 100%`, so the control overflows its container to the right and
+     the value is clipped. Dropping the native appearance lets the field
+     shrink to match the other controls; the picker still opens on tap. */
+  input[type='date'] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
 }
 
 /* Native date controls have a large intrinsic width and will paint over
-   the next column unless the grid cell is allowed to shrink them. */
+   the next column unless the field itself is allowed to shrink. */
 input[type='date'] {
   display: block;
+  box-sizing: border-box;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
+}
+
+/* iOS Safari paints the whole date in a single value element. Keep it
+   left-aligned and un-clipped so the year is never cut off on the right,
+   and let the picker indicator sit flush at the right edge. */
+input[type='date']::-webkit-date-and-time-value {
+  margin: 0;
+  min-width: 0;
+  text-align: left;
+}
+
+/* Chromium (desktop and the Cursor browser) uses editable sub-fields;
+   drop their padding so they do not force the field wider than its cell. */
+input[type='date']::-webkit-datetime-edit {
+  padding: 0;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+  margin-left: 2px;
+  padding: 0;
+  flex-shrink: 0;
 }

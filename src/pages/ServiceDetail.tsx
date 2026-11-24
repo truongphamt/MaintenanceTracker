@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Edit2, Clock, Calendar,
+  ArrowLeft, Plus, Clock, Calendar,
   DollarSign, Home, Car, User, Wrench, Paperclip, FileText,
   Image as ImageIcon, Mail, File, Download, Eye, X,
 } from 'lucide-react';
@@ -10,6 +10,7 @@ import { useApp } from '../context/AppContext';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import SwipeRow from '../components/SwipeRow';
+import AutoGrowTextarea from '../components/AutoGrowTextarea';
 import {
   getServiceStatus,
   getLastServiceDate,
@@ -37,8 +38,6 @@ export default function ServiceDetail() {
   const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
   const [deleteAttachment, setDeleteAttachment] = useState<{ recordId: string; attachmentId: string; name: string } | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
-  const [attachToRecord, setAttachToRecord] = useState<string | null>(null);
-
   const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
   const [recordNotes, setRecordNotes] = useState('');
   const [recordCost, setRecordCost] = useState('');
@@ -50,10 +49,9 @@ export default function ServiceDetail() {
   const [editSubIntervalUnit, setEditSubIntervalUnit] = useState<IntervalUnit>('months');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const attachFileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = (files: FileList | null, target: 'new' | string) => {
-    if (!files || !item || !sub) return;
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
     Array.from(files).forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -64,14 +62,7 @@ export default function ServiceDetail() {
           size: file.size,
           dataUrl: e.target?.result as string,
         };
-        if (target === 'new') {
-          setRecordAttachments(prev => [...prev, attachment]);
-        } else {
-          dispatch({
-            type: 'ADD_ATTACHMENT',
-            payload: { itemId: item.id, subItemId: sub.id, recordId: target, attachment },
-          });
-        }
+        setRecordAttachments(prev => [...prev, attachment]);
       };
       reader.readAsDataURL(file);
     });
@@ -224,18 +215,10 @@ export default function ServiceDetail() {
           <h2 className="text-lg font-semibold text-gray-900 truncate">{sub.name}</h2>
           <p className="text-xs text-gray-500">{item.name}</p>
         </div>
-        <button
-          onClick={openEditSub}
-          className="text-gray-400 hover:text-gray-600 p-1"
-        >
-          <Edit2 size={16} />
-        </button>
-        <button onClick={() => setShowDeleteConfirm(true)} className="text-gray-400 hover:text-danger-600 p-1">
-          <Trash2 size={16} />
-        </button>
       </div>
 
-      {/* Status overview */}
+      {/* Status overview — swipe right to edit, left to delete */}
+      <SwipeRow className="rounded-xl" onEdit={openEditSub} onDelete={() => setShowDeleteConfirm(true)}>
       <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500">Status</span>
@@ -268,6 +251,7 @@ export default function ServiceDetail() {
           </div>
         )}
       </div>
+      </SwipeRow>
 
       {/* Action buttons */}
       <div className="flex gap-2">
@@ -289,21 +273,17 @@ export default function ServiceDetail() {
       {sub.scheduled.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 px-4 py-3">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Scheduled</h3>
-          {sub.scheduled.map(s => (
-            <div key={s.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 text-sm">
-              <div>
-                <span className={`font-medium ${daysFromNow(s.dueDate) < 0 ? 'text-danger-600' : 'text-gray-700'}`}>
-                  {formatDate(s.dueDate)}
-                </span>
-                {s.notes && <span className="text-gray-500 ml-2">- {s.notes}</span>}
+          {[...sub.scheduled].sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()).map(s => (
+            <SwipeRow key={s.id} onDelete={() => setDeleteScheduleId(s.id)}>
+              <div className="flex items-center justify-between py-2 border-b border-gray-50 text-sm">
+                <div>
+                  <span className={`font-medium ${daysFromNow(s.dueDate) < 0 ? 'text-danger-600' : 'text-gray-700'}`}>
+                    {formatDate(s.dueDate)}
+                  </span>
+                  {s.notes && <span className="text-gray-500 ml-2">- {s.notes}</span>}
+                </div>
               </div>
-              <button
-                onClick={() => setDeleteScheduleId(s.id)}
-                className="text-gray-300 hover:text-danger-500 p-1"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
+            </SwipeRow>
           ))}
         </div>
       )}
@@ -316,41 +296,18 @@ export default function ServiceDetail() {
             {[...sub.history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(record => {
               const attachments = record.attachments || [];
               return (
-                <SwipeRow key={record.id} onDelete={() => setDeleteRecordId(record.id)}>
+                <SwipeRow key={record.id} onEdit={() => openEditRecord(record.id)} onDelete={() => setDeleteRecordId(record.id)}>
                 <div className="py-2 border-b border-gray-50">
                   <div className="flex items-start justify-between text-sm">
                     <div>
                       <span className="font-medium text-gray-700">{formatDate(record.date)}</span>
                       {record.notes && <p className="text-gray-500 text-xs mt-0.5">{record.notes}</p>}
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                      {record.cost != null && (
-                        <span className="text-xs text-gray-500 flex items-center gap-0.5">
-                          <DollarSign size={12} />{record.cost.toFixed(2)}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => openEditRecord(record.id)}
-                        className="text-gray-300 hover:text-primary-500 p-1"
-                        title="Edit record"
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                      <button
-                        onClick={() => { setAttachToRecord(record.id); attachFileInputRef.current?.click(); }}
-                        className="text-gray-300 hover:text-primary-500 p-1"
-                        title="Attach receipt"
-                      >
-                        <Paperclip size={12} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteRecordId(record.id)}
-                        className="text-gray-300 hover:text-danger-500 p-1"
-                        title="Delete record"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
+                    {record.cost != null && (
+                      <span className="text-xs font-semibold text-gray-900 flex items-center gap-0.5 shrink-0 ml-2">
+                        <DollarSign size={12} />{record.cost.toFixed(2)}
+                      </span>
+                    )}
                   </div>
                   {attachments.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -398,7 +355,7 @@ export default function ServiceDetail() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea value={recordNotes} onChange={e => setRecordNotes(e.target.value)} placeholder="What was done..." rows={2} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
+            <AutoGrowTextarea value={recordNotes} onChange={e => setRecordNotes(e.target.value)} placeholder="What was done..." minRows={3} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cost ($) <span className="text-gray-400 font-normal">optional</span></label>
@@ -442,7 +399,7 @@ export default function ServiceDetail() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea value={scheduleNotes} onChange={e => setScheduleNotes(e.target.value)} placeholder="Details about the service..." rows={2} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
+            <AutoGrowTextarea value={scheduleNotes} onChange={e => setScheduleNotes(e.target.value)} placeholder="Details about the service..." minRows={3} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none" />
           </div>
           <button type="submit" className="w-full bg-primary-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-700 transition">Schedule</button>
         </form>
@@ -551,8 +508,7 @@ export default function ServiceDetail() {
       </Modal>
 
       {/* Hidden file inputs */}
-      <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.eml,.msg" onChange={(e) => { handleFiles(e.target.files, 'new'); e.target.value = ''; }} className="hidden" />
-      <input ref={attachFileInputRef} type="file" multiple accept="image/*,.pdf,.eml,.msg" onChange={(e) => { if (attachToRecord) { handleFiles(e.target.files, attachToRecord); setAttachToRecord(null); } e.target.value = ''; }} className="hidden" />
+      <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.eml,.msg" onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }} className="hidden" />
     </div>
   );
 }
